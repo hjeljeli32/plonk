@@ -1,6 +1,6 @@
 use ark_bls12_381::Fr;
 use ark_ff::{AdditiveGroup, BigInteger256, Field, PrimeField};
-use ark_std::{test_rng, UniformRand};
+use ark_std::UniformRand;
 
 #[test]
 fn test_field_modulus() {
@@ -41,8 +41,9 @@ fn test_field_operations() {
 
 #[test]
 fn test_field_inversion() {
+    let mut rng = ark_std::test_rng();
     for _ in 0..100 {
-        let t = Fr::rand(&mut test_rng());
+        let t = Fr::rand(&mut rng);
         let inverse_t = t.inverse().unwrap();
 
         assert_eq!(inverse_t * t, Fr::ONE, "Inverse computation failed");
@@ -51,8 +52,9 @@ fn test_field_inversion() {
 
 #[test]
 fn test_field_division() {
+    let mut rng = ark_std::test_rng();
     for _ in 0..100 {
-        let t = Fr::rand(&mut test_rng());
+        let t = Fr::rand(&mut rng);
         let inverse_t = Fr::ONE / t;
 
         assert_eq!(
