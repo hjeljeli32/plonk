@@ -185,7 +185,7 @@ fn test_full_protocol() {
         // Prover computes commitment of f
         let com_f = commit(&gp, &f);
 
-        // Verfifier generates randomly u
+        // Verifier generates randomly u
         let u = Fr::rand(&mut rng);
 
         // Prover evaluates f on u
