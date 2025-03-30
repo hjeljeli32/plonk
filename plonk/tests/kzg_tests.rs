@@ -59,7 +59,7 @@ fn test_commit() {
     let f = random_polynomial(degree);
 
     // compute commitment of f
-    let com_f = commit(&gp, &f);
+    let com_f = commit(&gp, &f).unwrap();
 
     assert_eq!(
         com_f,
@@ -183,7 +183,7 @@ fn test_full_protocol() {
         let f = random_polynomial(degree);
 
         // Prover computes commitment of f
-        let com_f = commit(&gp, &f);
+        let com_f = commit(&gp, &f).unwrap();
 
         // Verifier generates randomly u
         let u = Fr::rand(&mut rng);

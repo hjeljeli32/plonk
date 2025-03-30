@@ -5,6 +5,13 @@ use ark_poly::{
     Polynomial,
     univariate::{DenseOrSparsePolynomial, DensePolynomial},
 };
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum CommitError {
+    #[error("Length of tau_powers_g1 must be at least equal to degree of polynomial + 1")]
+    CommitFailed,
+}
 
 #[derive(Clone)]
 pub struct GlobalParameters {
@@ -37,20 +44,19 @@ pub fn setup(degree: usize) -> GlobalParameters {
 }
 
 // Commits a polynomial f with respect to given global parameters
-pub fn commit(gp: &GlobalParameters, f: &DensePolynomial<Fr>) -> G1 {
-    assert_eq!(
-        gp.tau_powers_g1.len(),
-        f.degree() + 1,
-        "Length of tau_powers_g1 of gp must be equal to degree of + 1"
-    );
-
-    // compute g1*f(tau)
-    f.coeffs
-        .iter()
-        .enumerate()
-        .map(|(i, f_i)| gp.tau_powers_g1[i] * f_i)
-        .reduce(|com_f, f_i_tau_i_g1| com_f + f_i_tau_i_g1)
-        .unwrap()
+pub fn commit(gp: &GlobalParameters, f: &DensePolynomial<Fr>) -> Result<G1, CommitError> {
+    if gp.tau_powers_g1.len() < f.degree() + 1 {
+        return Err(CommitError::CommitFailed);
+    } else {
+        // compute g1*f(tau)
+        return Ok(f
+            .coeffs
+            .iter()
+            .enumerate()
+            .map(|(i, f_i)| gp.tau_powers_g1[i] * f_i)
+            .reduce(|com_f, f_i_tau_i_g1| com_f + f_i_tau_i_g1)
+            .unwrap());
+    }
 }
 
 // Evaluates polynomial f on a given point u and generates proof
