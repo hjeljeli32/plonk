@@ -9,8 +9,9 @@ fn test_field_modulus() {
         0x53BDA402FFFE5BFE,
         0x3339D80809A1D805,
         0x73EDA753299D7D48,
-    ])).unwrap();
-    
+    ]))
+    .unwrap();
+
     let minus_1 = Fr::ZERO - Fr::from(1);
 
     assert_eq!(modulus_minus_1, minus_1, "modulus-1 should be -1");

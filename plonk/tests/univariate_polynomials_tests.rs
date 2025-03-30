@@ -1,9 +1,9 @@
 use ark_bls12_381::Fr;
-use plonk::common::univariate_polynomials::*;
 use ark_ff::{AdditiveGroup, BigInteger, BigInteger256, FftField, Field, PrimeField};
 use ark_poly::polynomial::univariate::*;
 use ark_poly::{DenseUVPolynomial, Polynomial};
-use ark_std::{rand::Rng, test_rng, UniformRand};
+use ark_std::{UniformRand, rand::Rng, test_rng};
+use plonk::common::univariate_polynomials::*;
 use std::collections::HashSet;
 
 #[test]
@@ -22,10 +22,7 @@ fn test_add_polys() {
         coeffs: vec![Fr::from(4), Fr::from(5), Fr::from(6)],
     }; // 4 + 5*x + 6*x^2
     let poly3 = &poly1 + &poly2;
-    assert_eq!(
-        poly3.coeffs,
-        vec![Fr::from(5), Fr::from(7), Fr::from(9)]
-    ); // 5 + 7x + 9*x^2
+    assert_eq!(poly3.coeffs, vec![Fr::from(5), Fr::from(7), Fr::from(9)]); // 5 + 7x + 9*x^2
 }
 
 #[test]
@@ -37,10 +34,7 @@ fn test_mul_polys() {
         coeffs: vec![Fr::ONE, Fr::ONE],
     }; // 1 + x
     let poly3 = &poly1 * &poly2;
-    assert_eq!(
-        poly3.coeffs,
-        vec![Fr::ONE, Fr::from(2), Fr::ONE]
-    ); // 1 + 2x + x^2
+    assert_eq!(poly3.coeffs, vec![Fr::ONE, Fr::from(2), Fr::ONE]); // 1 + 2x + x^2
 }
 
 #[test]
@@ -160,11 +154,7 @@ fn test_eval_poly() {
 
 #[test]
 fn test_poly_interpolation() {
-    let x_vals = vec![
-        Fr::from(0u64),
-        Fr::from(1u64),
-        Fr::from(2u64),
-    ];
+    let x_vals = vec![Fr::from(0u64), Fr::from(1u64), Fr::from(2u64)];
     let y_vals = vec![
         Fr::from(0u64), // f(0)
         Fr::from(1u64), // f(1)
@@ -213,12 +203,7 @@ fn test_pow_poly() {
         coeffs: vec![Fr::ONE, Fr::from(2), Fr::ONE],
     }; // 1 + 2x + x^2
     let f_pow_3_expected = DensePolynomial {
-        coeffs: vec![
-            Fr::ONE,
-            Fr::from(3),
-            Fr::from(3),
-            Fr::ONE,
-        ],
+        coeffs: vec![Fr::ONE, Fr::from(3), Fr::from(3), Fr::ONE],
     }; // 1 + 3x + 3x^2 + x^3
     assert_eq!(f_pow_2, f_pow_2_expected);
     assert_eq!(f_pow_3, f_pow_3_expected);

@@ -1,8 +1,8 @@
 use ark_bls12_381::Fr;
 use ark_ff::Field;
-use ark_poly::polynomial::univariate::*;
 use ark_poly::DenseUVPolynomial;
-use ark_std::{test_rng, Zero};
+use ark_poly::polynomial::univariate::*;
+use ark_std::{Zero, test_rng};
 use rayon::prelude::*;
 
 /// Generates a random polynomial of certain degree
@@ -48,10 +48,7 @@ fn calculate_lagrange_polynomials(x_points: &Vec<Fr>) -> Vec<DensePolynomial<Fr>
 }
 
 /// Interpolates a polynomial from given evaluations at points using Lagrange interpolation.
-pub fn interpolate_polynomial(
-    x_points: &Vec<Fr>,
-    y_points: &Vec<Fr>,
-) -> DensePolynomial<Fr> {
+pub fn interpolate_polynomial(x_points: &Vec<Fr>, y_points: &Vec<Fr>) -> DensePolynomial<Fr> {
     let n = x_points.len();
     let lagrange_polys = calculate_lagrange_polynomials(&x_points);
 

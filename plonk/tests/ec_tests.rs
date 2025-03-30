@@ -1,6 +1,6 @@
-use ark_ec::{AdditiveGroup, PrimeGroup, pairing::Pairing};
 use ark_bls12_381::{Bls12_381, Fr, G1Projective as G1, G2Projective as G2};
 use ark_ec::CurveGroup;
+use ark_ec::{AdditiveGroup, PrimeGroup, pairing::Pairing};
 use ark_ff::UniformRand;
 use ark_std::Zero;
 
@@ -11,7 +11,10 @@ fn test_closure() {
     let a = G1::rand(&mut rng);
     let b = G1::rand(&mut rng);
 
-    assert!((a + b).into_affine().is_on_curve(), "a+b is not on the curve");
+    assert!(
+        (a + b).into_affine().is_on_curve(),
+        "a+b is not on the curve"
+    );
 }
 
 #[test]
@@ -22,7 +25,11 @@ fn test_associativity() {
     let b = G1::rand(&mut rng);
     let c = G1::rand(&mut rng);
 
-    assert_eq!((a + b) + c, a + (b + c), "(a + b) + c is not equal to a + (b + c)");
+    assert_eq!(
+        (a + b) + c,
+        a + (b + c),
+        "(a + b) + c is not equal to a + (b + c)"
+    );
 }
 
 #[test]
@@ -73,12 +80,10 @@ fn test_pairing() {
     let mut rng = ark_std::test_rng();
     // Let's sample uniformly random scalars
     let x = Fr::rand(&mut rng);
-    let y = Fr::rand(&mut rng);    
+    let y = Fr::rand(&mut rng);
 
     let e1 = Bls12_381::pairing(G1::generator() * x, G2::generator() * y);
     let e2 = Bls12_381::pairing(G1::generator() * (x * y), G2::generator());
 
     assert_eq!(e1, e2, "e1 and e2 are not equal");
 }
-
-
