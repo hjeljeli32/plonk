@@ -7,7 +7,7 @@ use ark_poly::{
 };
 use ark_std::rand::Rng;
 use plonk::common::{
-    kzg::{GlobalParameters, commit, evaluate, setup, verify},
+    kzg::{CommitError, GlobalParameters, commit, evaluate, setup, verify},
     univariate_polynomials::random_polynomial,
 };
 
@@ -34,7 +34,7 @@ fn test_setup() {
 }
 
 #[test]
-fn test_commit() {
+fn test_commit_success() {
     let mut rng = ark_std::test_rng();
 
     let degree = 10;
@@ -67,6 +67,26 @@ fn test_commit() {
         "Commitment of f must be equal to g1*f(z)"
     );
 }
+
+#[test]
+fn test_commit_fail() {
+    let degree = 10;
+
+    // generate global parameters
+    let gp = setup(degree);
+
+    // generate randomly a polynomial f of degree + 1 
+    let f = random_polynomial(degree + 1);
+
+    // commit call should return an error
+    let result = commit(&gp, &f);
+    assert!(result.is_err(), "Expected an error but got Ok instead");
+    if let Err(e) = result {
+        assert!(matches!(e, CommitError::CommitFailed), "Unexpected error: {:?}", e);
+    }
+
+}
+
 
 #[test]
 fn test_eval() {
