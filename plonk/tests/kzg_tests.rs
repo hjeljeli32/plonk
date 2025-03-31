@@ -7,14 +7,14 @@ use ark_poly::{
 };
 use ark_std::rand::Rng;
 use plonk::common::{
-    kzg::{CommitError, GlobalParameters, commit, evaluate, setup, verify},
+    kzg::{CommitError, GlobalParameters, kzg_commit, kzg_evaluate, kzg_setup, kzg_verify},
     univariate_polynomials::random_polynomial,
 };
 
 #[test]
-fn test_setup() {
+fn test_kzg_setup() {
     let degree = 10;
-    let gp = setup(degree);
+    let gp = kzg_setup(degree);
 
     assert_eq!(
         gp.tau_powers_g1.len(),
@@ -34,7 +34,7 @@ fn test_setup() {
 }
 
 #[test]
-fn test_commit_success() {
+fn test_kzg_commit_success() {
     let mut rng = ark_std::test_rng();
 
     let degree = 10;
@@ -56,10 +56,10 @@ fn test_commit_success() {
     };
 
     // generate randomly a polynomial f
-    let f = random_polynomial(degree);
+    let f = random_polynomial(&mut rng, degree);
 
     // compute commitment of f
-    let com_f = commit(&gp, &f).unwrap();
+    let com_f = kzg_commit(&gp, &f).unwrap();
 
     assert_eq!(
         com_f,
@@ -69,27 +69,31 @@ fn test_commit_success() {
 }
 
 #[test]
-fn test_commit_fail() {
+fn test_kzg_commit_fail() {
+    let mut rng = ark_std::test_rng();
+
     let degree = 10;
 
     // generate global parameters
-    let gp = setup(degree);
+    let gp = kzg_setup(degree);
 
-    // generate randomly a polynomial f of degree + 1 
-    let f = random_polynomial(degree + 1);
+    // generate randomly a polynomial f of degree + 1
+    let f = random_polynomial(&mut rng, degree + 1);
 
     // commit call should return an error
-    let result = commit(&gp, &f);
+    let result = kzg_commit(&gp, &f);
     assert!(result.is_err(), "Expected an error but got Ok instead");
     if let Err(e) = result {
-        assert!(matches!(e, CommitError::CommitFailed), "Unexpected error: {:?}", e);
+        assert!(
+            matches!(e, CommitError::CommitFailed),
+            "Unexpected error: {:?}",
+            e
+        );
     }
-
 }
 
-
 #[test]
-fn test_eval() {
+fn test_kzg_eval() {
     let mut rng = ark_std::test_rng();
 
     let degree = 10;
@@ -111,7 +115,7 @@ fn test_eval() {
     };
 
     // generate randomly a polynomial f
-    let f = random_polynomial(degree);
+    let f = random_polynomial(&mut rng, degree);
 
     // generate randomly u
     let u = Fr::rand(&mut rng);
@@ -131,7 +135,7 @@ fn test_eval() {
             .unwrap();
 
     // call eval on gp, f, u
-    let (v, proof) = evaluate(&gp, &f, u);
+    let (v, proof) = kzg_evaluate(&gp, &f, u);
 
     assert_eq!(v, f.evaluate(&u), "v must be equal to f(u)");
     assert_eq!(
@@ -142,7 +146,7 @@ fn test_eval() {
 }
 
 #[test]
-fn test_verify() {
+fn test_kzg_verify() {
     let mut rng = ark_std::test_rng();
 
     let degree = 10;
@@ -164,7 +168,7 @@ fn test_verify() {
     };
 
     // generate randomly a polynomial f
-    let f = random_polynomial(degree);
+    let f = random_polynomial(&mut rng, degree);
 
     // generate randomly u and compute v as f(u)
     let u = Fr::rand(&mut rng);
@@ -186,32 +190,38 @@ fn test_verify() {
     let proof = G1::generator() * q.evaluate(&tau);
 
     // call verify on gp, com_f, u, v, proof
-    assert!(verify(&gp, com_f, u, v, proof), "Verify must return true");
+    assert!(
+        kzg_verify(&gp, com_f, u, v, proof),
+        "Verify must return true"
+    );
 }
 
 #[test]
-fn test_full_protocol() {
+fn test_full_kzg_protocol() {
     let mut rng = ark_std::test_rng();
 
     for _ in 0..10 {
         let degree = rng.gen_range(0..=100);
 
         // generate global parameters
-        let gp = setup(degree);
+        let gp = kzg_setup(degree);
 
-        // generate randomly a polynomial f
-        let f = random_polynomial(degree);
+        // Prover generates randomly a polynomial f
+        let f = random_polynomial(&mut rng, degree);
 
         // Prover computes commitment of f
-        let com_f = commit(&gp, &f).unwrap();
+        let com_f = kzg_commit(&gp, &f).unwrap();
 
         // Verifier generates randomly u
         let u = Fr::rand(&mut rng);
 
         // Prover evaluates f on u
-        let (v, proof) = evaluate(&gp, &f, u);
+        let (v, proof) = kzg_evaluate(&gp, &f, u);
 
         // Verifier verifies (v, proof) sent by Prover
-        assert!(verify(&gp, com_f, u, v, proof), "Verify must return true");
+        assert!(
+            kzg_verify(&gp, com_f, u, v, proof),
+            "Verify must return true"
+        );
     }
 }

@@ -20,7 +20,7 @@ pub struct GlobalParameters {
 }
 
 // Generates global parameters for KZG polynomial commitment scheme
-pub fn setup(degree: usize) -> GlobalParameters {
+pub fn kzg_setup(degree: usize) -> GlobalParameters {
     let mut rng = ark_std::test_rng();
 
     // Sample uniformly a random tau
@@ -44,23 +44,22 @@ pub fn setup(degree: usize) -> GlobalParameters {
 }
 
 // Commits a polynomial f with respect to given global parameters
-pub fn commit(gp: &GlobalParameters, f: &DensePolynomial<Fr>) -> Result<G1, CommitError> {
+pub fn kzg_commit(gp: &GlobalParameters, f: &DensePolynomial<Fr>) -> Result<G1, CommitError> {
     if gp.tau_powers_g1.len() < f.degree() + 1 {
-        return Err(CommitError::CommitFailed);
+        Err(CommitError::CommitFailed)
     } else {
         // compute g1*f(tau)
-        return Ok(f
-            .coeffs
+        Ok(f.coeffs
             .iter()
             .enumerate()
             .map(|(i, f_i)| gp.tau_powers_g1[i] * f_i)
             .reduce(|com_f, f_i_tau_i_g1| com_f + f_i_tau_i_g1)
-            .unwrap());
+            .unwrap())
     }
 }
 
 // Evaluates polynomial f on a given point u and generates proof
-pub fn evaluate(gp: &GlobalParameters, f: &DensePolynomial<Fr>, u: Fr) -> (Fr, G1) {
+pub fn kzg_evaluate(gp: &GlobalParameters, f: &DensePolynomial<Fr>, u: Fr) -> (Fr, G1) {
     // compute v as evaluation of f on u
     let v = f.evaluate(&u);
 
@@ -87,7 +86,7 @@ pub fn evaluate(gp: &GlobalParameters, f: &DensePolynomial<Fr>, u: Fr) -> (Fr, G
     (v, proof)
 }
 
-pub fn verify(gp: &GlobalParameters, com_f: G1, u: Fr, v: Fr, proof: G1) -> bool {
+pub fn kzg_verify(gp: &GlobalParameters, com_f: G1, u: Fr, v: Fr, proof: G1) -> bool {
     // compute left-hand side of pairing equality
     let e1 = Bls12_381::pairing(com_f - G1::generator() * v, G2::generator());
     // compute right-hand side of pairing equality

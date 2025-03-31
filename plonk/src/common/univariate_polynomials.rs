@@ -2,12 +2,11 @@ use ark_bls12_381::Fr;
 use ark_ff::Field;
 use ark_poly::DenseUVPolynomial;
 use ark_poly::polynomial::univariate::*;
-use ark_std::{Zero, test_rng};
+use ark_std::{Zero, rand::Rng};
 use rayon::prelude::*;
 
 /// Generates a random polynomial of certain degree
-pub fn random_polynomial(degree: usize) -> DensePolynomial<Fr> {
-    let rng = &mut test_rng();
+pub fn random_polynomial(rng: &mut impl Rng, degree: usize) -> DensePolynomial<Fr> {
     DensePolynomial::<Fr>::rand(degree, rng)
 }
 

@@ -8,8 +8,13 @@ use std::collections::HashSet;
 
 #[test]
 fn test_rand_poly_degree() {
+    let mut rng = ark_std::test_rng();
     for i in 0..100 {
-        assert_eq!(random_polynomial(i).degree(), i, "degree is wrong");
+        assert_eq!(
+            random_polynomial(&mut rng, i).degree(),
+            i,
+            "degree is wrong"
+        );
     }
 }
 
@@ -114,7 +119,7 @@ fn test_divide_with_q_r_rand_polys() {
 
 #[test]
 fn test_prod_polys() {
-    // define g as element of order (modulus-1)/1024
+    // define g as element of order 1024
     let mut exponent = Fr::MODULUS;
     exponent.sub_with_borrow(&BigInteger256::from(1_u64));
     exponent >>= 10; // divide exponent by 1024
