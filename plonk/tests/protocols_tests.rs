@@ -1,9 +1,12 @@
 use ark_bls12_381::Fr;
 use ark_ff::{AdditiveGroup, BigInteger, BigInteger256, FftField, Field, PrimeField, UniformRand};
-use ark_poly::{univariate::DensePolynomial, Polynomial};
+use ark_poly::{Polynomial, univariate::DensePolynomial};
 use plonk::common::{
     kzg::{kzg_commit, kzg_setup},
-    protocols::{compute_q_zero_test, prove_equality, prove_zero_test, verify_equality, verify_zero_test},
+    protocols::{
+        compute_q_zero_test, compute_t_and_t1_product_check, prove_equality, prove_product_check,
+        prove_zero_test, verify_equality, verify_product_check, verify_zero_test,
+    },
     univariate_polynomials::{interpolate_polynomial, random_polynomial},
 };
 
@@ -81,9 +84,9 @@ fn test_zero_test_success() {
 
     // compute x_vals and y_vals and interpolate f
     let mut x_vals: Vec<Fr> = (0..8).map(|i| omega.pow([i as u64])).collect();
-    x_vals.extend((0..3).map(|_| Fr::rand(&mut rng))); 
+    x_vals.extend((0..3).map(|_| Fr::rand(&mut rng)));
     let mut y_vals: Vec<Fr> = (0..8).map(|_| Fr::ZERO).collect();
-    y_vals.extend((0..3).map(|_| Fr::rand(&mut rng))); 
+    y_vals.extend((0..3).map(|_| Fr::rand(&mut rng)));
     let f = interpolate_polynomial(&x_vals, &y_vals);
 
     // check that f is of degree 10
@@ -152,7 +155,7 @@ fn test_zero_test_fail() {
     // Prover computes quotient polynomial of f by Z_Omega
     let q = compute_q_zero_test(k, &f);
 
-    // check that f is divisble by Z_Omega
+    // check that f is not divisble by Z_Omega
     assert_ne!(&q * &Z_Omega, f, "f must be not divisible by Z_Omega");
 
     // Prover computes commitment of q
@@ -168,5 +171,218 @@ fn test_zero_test_fail() {
     assert!(
         verify_zero_test(&gp, k, com_f, com_q, r, f_r, proof_f, q_r, proof_q) == false,
         "Verify must return false because polynomial is not Zero on Omega"
+    );
+}
+
+#[test]
+fn test_product_check_success() {
+    let mut rng = ark_std::test_rng();
+    // this degree is used for kzg setup. We need to commit to polynomial q of degree 12.
+    let degree = 12;
+
+    // generate global parameters
+    let gp = kzg_setup(degree);
+
+    // define omega as element of order 8
+    let mut exponent = Fr::MODULUS;
+    exponent.sub_with_borrow(&BigInteger256::from(1_u64));
+    exponent >>= 3; // divide exponent by 8
+    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
+    let Omega: Vec<Fr> = (0..8).map(|i| omega.pow([i as u64])).collect();
+
+    // compute x_vals and y_vals and interpolate f
+    let mut x_vals = Omega.clone();
+    x_vals.extend((0..3).map(|_| Fr::rand(&mut rng)));
+    let mut y_vals: Vec<Fr> = (0..7).map(|_| Fr::rand(&mut rng)).collect();
+    // product of f(omega_i) for i in [0,7]
+    let product = y_vals
+        .iter()
+        .copied()
+        .reduce(|prod, y_val| prod * y_val)
+        .unwrap();
+    y_vals.push(product.inverse().unwrap());
+    y_vals.extend((0..3).map(|_| Fr::rand(&mut rng)));
+    let f = interpolate_polynomial(&x_vals, &y_vals);
+
+    assert_eq!(
+        Omega
+            .iter()
+            .map(|omega| f.evaluate(&omega))
+            .reduce(|prod, f_omega| prod * f_omega)
+            .unwrap(),
+        Fr::ONE,
+        "product of f over Omega must be equal to 1"
+    );
+
+    // check that f is of degree 10
+    assert_eq!(f.degree(), 10, "f must be of degree 10");
+
+    // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
+    let k = 8;
+    let mut coefficients = vec![Fr::from(-1)];
+    coefficients.extend(vec![Fr::ZERO; k - 1]);
+    coefficients.push(Fr::ONE);
+    let Z_Omega = DensePolynomial {
+        coeffs: coefficients,
+    }; // -1 + x^8
+
+    // Prover computes commitment of f
+    let com_f = kzg_commit(&gp, &f).unwrap();
+
+    // Prover constructs the polynomials t and t1 based on polynomial f and subset Omega
+    let (t, t1) = compute_t_and_t1_product_check(&Omega, &f);
+
+    // Prover computes quotient polynomial of t1 by Z_Omega
+    let q = compute_q_zero_test(k, &t1);
+
+    // check that t1 is divisble by Z_Omega
+    assert_eq!(&q * &Z_Omega, t1, "t1 must be divisible by Z_Omega");
+
+    // Prover computes commitment of t
+    let com_t = kzg_commit(&gp, &t).unwrap();
+
+    // Prover computes commitment of q
+    let com_q = kzg_commit(&gp, &q).unwrap();
+
+    // Verifier generates randomly r
+    let r = Fr::rand(&mut rng);
+
+    // Prover proves Product Check
+    let (
+        t_w_k_minus_1,
+        proof_t_w_k_minus_1,
+        t_r,
+        proof_t_r,
+        t_w_r,
+        proof_t_w_r,
+        q_r,
+        proof_q_r,
+        f_w_r,
+        proof_f_w_r,
+    ) = prove_product_check(&gp, Omega[1], k, &t, &q, &f, r);
+
+    // Verifier verifies Product Check
+    assert!(
+        verify_product_check(
+            &gp,
+            Omega[1],
+            k,
+            com_f,
+            com_q,
+            com_t,
+            r,
+            t_w_k_minus_1,
+            proof_t_w_k_minus_1,
+            t_r,
+            proof_t_r,
+            t_w_r,
+            proof_t_w_r,
+            q_r,
+            proof_q_r,
+            f_w_r,
+            proof_f_w_r,
+        ),
+        "Verify must return true because polynomial's product over Omega is 1"
+    );
+}
+
+#[test]
+fn test_product_check_fail() {
+    let mut rng = ark_std::test_rng();
+    // this degree is used for kzg setup. We need to commit to polynomial q of degree 12.
+    let degree = 12;
+
+    // generate global parameters
+    let gp = kzg_setup(degree);
+
+    // define omega as element of order 8
+    let mut exponent = Fr::MODULUS;
+    exponent.sub_with_borrow(&BigInteger256::from(1_u64));
+    exponent >>= 3; // divide exponent by 8
+    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
+    let Omega: Vec<Fr> = (0..8).map(|i| omega.pow([i as u64])).collect();
+
+    // generate f randomly so its product over Omega is not equal to 1
+    let f = random_polynomial(&mut rng, 10);
+
+    assert_ne!(
+        Omega
+            .iter()
+            .map(|omega| f.evaluate(&omega))
+            .reduce(|prod, f_omega| prod * f_omega)
+            .unwrap(),
+        Fr::ONE,
+        "product of f over Omega must be not equal to 1"
+    );
+
+    // check that f is of degree 10
+    assert_eq!(f.degree(), 10, "f must be of degree 10");
+
+    // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
+    let k = 8;
+    let mut coefficients = vec![Fr::from(-1)];
+    coefficients.extend(vec![Fr::ZERO; k - 1]);
+    coefficients.push(Fr::ONE);
+    let Z_Omega = DensePolynomial {
+        coeffs: coefficients,
+    }; // -1 + x^8
+
+    // Prover computes commitment of f
+    let com_f = kzg_commit(&gp, &f).unwrap();
+
+    // Prover constructs the polynomials t and t1 based on polynomial f and subset Omega
+    let (t, t1) = compute_t_and_t1_product_check(&Omega, &f);
+
+    // Prover computes quotient polynomial of t1 by Z_Omega
+    let q = compute_q_zero_test(k, &t1);
+
+    // check that t1 is divisble by Z_Omega
+    assert_ne!(&q * &Z_Omega, t1, "t1 must be not divisible by Z_Omega");
+
+    // Prover computes commitment of t
+    let com_t = kzg_commit(&gp, &t).unwrap();
+
+    // Prover computes commitment of q
+    let com_q = kzg_commit(&gp, &q).unwrap();
+
+    // Verifier generates randomly r
+    let r = Fr::rand(&mut rng);
+
+    // Prover proves Product Check
+    let (
+        t_w_k_minus_1,
+        proof_t_w_k_minus_1,
+        t_r,
+        proof_t_r,
+        t_w_r,
+        proof_t_w_r,
+        q_r,
+        proof_q_r,
+        f_w_r,
+        proof_f_w_r,
+    ) = prove_product_check(&gp, Omega[1], k, &t, &q, &f, r);
+
+    // Verifier verifies Product Check
+    assert!(
+        verify_product_check(
+            &gp,
+            Omega[1],
+            k,
+            com_f,
+            com_q,
+            com_t,
+            r,
+            t_w_k_minus_1,
+            proof_t_w_k_minus_1,
+            t_r,
+            proof_t_r,
+            t_w_r,
+            proof_t_w_r,
+            q_r,
+            proof_q_r,
+            f_w_r,
+            proof_f_w_r,
+        ) == false,
+        "Verify must return false because polynomial's product over Omega is not equal to 1"
     );
 }
