@@ -5,7 +5,10 @@ use ark_std::rand::seq::SliceRandom;
 use plonk::common::{
     kzg::{kzg_commit, kzg_setup},
     protocols::{
-        compute_q_zero_test, compute_t_and_t1_product_check, compute_t_and_t1_product_check_rational_functions, prove_equality, prove_product_check, prove_product_check_rational_functions, prove_zero_test, verify_equality, verify_product_check, verify_product_check_rational_functions, verify_zero_test
+        compute_q_zero_test, compute_t_and_t1_product_check,
+        compute_t_and_t1_product_check_rational_functions, prove_equality, prove_product_check,
+        prove_product_check_rational_functions, prove_zero_test, verify_equality,
+        verify_product_check, verify_product_check_rational_functions, verify_zero_test,
     },
     univariate_polynomials::{interpolate_polynomial, random_polynomial},
 };
