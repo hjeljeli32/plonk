@@ -5,10 +5,38 @@ use ark_std::rand::seq::SliceRandom;
 use plonk::common::{
     kzg::{kzg_commit, kzg_setup},
     protocols::{
-        compute_q_zero_test, compute_t_and_t1_product_check, compute_t_and_t1_product_check_rational_functions, compute_t_and_t1_sum_check, prove_equality, prove_product_check, prove_product_check_rational_functions, prove_sum_check, prove_zero_test, verify_equality, verify_product_check, verify_product_check_rational_functions, verify_sum_check, verify_zero_test
+        compute_q_zero_test, compute_t_and_t1_product_check,
+        compute_t_and_t1_product_check_rational_functions, compute_t_and_t1_sum_check,
+        prove_equality, prove_product_check, prove_product_check_rational_functions,
+        prove_sum_check, prove_zero_test, verify_equality, verify_product_check,
+        verify_product_check_rational_functions, verify_sum_check, verify_zero_test,
     },
     univariate_polynomials::{interpolate_polynomial, random_polynomial},
 };
+
+fn construct_Omega(k: usize) -> Vec<Fr> {
+    assert!(k.is_power_of_two(), "k must be a power of 2");
+    let mut modulus_minus_1 = Fr::MODULUS;
+    modulus_minus_1.sub_with_borrow(&BigInteger256::from(1_u64));
+    let exponent = modulus_minus_1 >> k.ilog2(); // divide by k
+    assert_eq!(
+        exponent.mul(&BigInteger256::from(k as u64)).0,
+        modulus_minus_1,
+        "exponent must be divisible by k"
+    );
+    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
+
+    (0..k).map(|i| omega.pow([i as u64])).collect()
+}
+
+fn construct_vanishing_polynomial(k: usize) -> DensePolynomial<Fr> {
+    let mut coefficients = vec![Fr::from(-1)];
+    coefficients.extend(vec![Fr::ZERO; k - 1]);
+    coefficients.push(Fr::ONE);
+    DensePolynomial {
+        coeffs: coefficients,
+    }
+}
 
 #[test]
 fn test_equality_success() {
@@ -74,16 +102,14 @@ fn test_zero_test_success() {
     let degree = 10;
 
     // generate global parameters
+    let k = 8;
     let gp = kzg_setup(degree);
 
-    // define omega as element of order 8
-    let mut exponent = Fr::MODULUS;
-    exponent.sub_with_borrow(&BigInteger256::from(1_u64));
-    exponent >>= 3; // divide exponent by 8
-    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
+    // define Omega as subset of size k
+    let Omega = construct_Omega(k);
 
     // compute x_vals and y_vals and interpolate f
-    let mut x_vals: Vec<Fr> = (0..8).map(|i| omega.pow([i as u64])).collect();
+    let mut x_vals = Omega.clone();
     x_vals.extend((0..3).map(|_| Fr::rand(&mut rng)));
     let mut y_vals: Vec<Fr> = (0..8).map(|_| Fr::ZERO).collect();
     y_vals.extend((0..3).map(|_| Fr::rand(&mut rng)));
@@ -93,13 +119,7 @@ fn test_zero_test_success() {
     assert_eq!(f.degree(), 10, "f must be of degree 10");
 
     // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
-    let k = 8;
-    let mut coefficients = vec![Fr::from(-1)];
-    coefficients.extend(vec![Fr::ZERO; k - 1]);
-    coefficients.push(Fr::ONE);
-    let Z_Omega = DensePolynomial {
-        coeffs: coefficients,
-    }; // -1 + x^8
+    let Z_Omega = construct_vanishing_polynomial(k); // -1 + x^8
 
     // Prover computes commitment of f
     let com_f = kzg_commit(&gp, &f).unwrap();
@@ -130,6 +150,7 @@ fn test_zero_test_success() {
 fn test_zero_test_fail() {
     let mut rng = ark_std::test_rng();
     let degree = 10;
+    let k = 8;
 
     // generate global parameters
     let gp = kzg_setup(degree);
@@ -141,13 +162,7 @@ fn test_zero_test_fail() {
     assert_eq!(f.degree(), 10, "f must be of degree 10");
 
     // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
-    let k = 8;
-    let mut coefficients = vec![Fr::from(-1)];
-    coefficients.extend(vec![Fr::ZERO; k - 1]);
-    coefficients.push(Fr::ONE);
-    let Z_Omega = DensePolynomial {
-        coeffs: coefficients,
-    }; // -1 + x^8
+    let Z_Omega = construct_vanishing_polynomial(k); // -1 + x^8
 
     // Prover computes commitment of f
     let com_f = kzg_commit(&gp, &f).unwrap();
@@ -179,16 +194,13 @@ fn test_product_check_success() {
     let mut rng = ark_std::test_rng();
     // this degree is used for kzg setup. We need to commit to polynomial q of degree 12.
     let degree = 12;
+    let k = 8;
 
     // generate global parameters
     let gp = kzg_setup(degree);
 
-    // define omega as element of order 8
-    let mut exponent = Fr::MODULUS;
-    exponent.sub_with_borrow(&BigInteger256::from(1_u64));
-    exponent >>= 3; // divide exponent by 8
-    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
-    let Omega: Vec<Fr> = (0..8).map(|i| omega.pow([i as u64])).collect();
+    // define Omega as subset of size k
+    let Omega = construct_Omega(k);
 
     // compute x_vals and y_vals and interpolate f
     let mut x_vals = Omega.clone();
@@ -218,13 +230,7 @@ fn test_product_check_success() {
     assert_eq!(f.degree(), 10, "f must be of degree 10");
 
     // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
-    let k = 8;
-    let mut coefficients = vec![Fr::from(-1)];
-    coefficients.extend(vec![Fr::ZERO; k - 1]);
-    coefficients.push(Fr::ONE);
-    let Z_Omega = DensePolynomial {
-        coeffs: coefficients,
-    }; // -1 + x^8
+    let Z_Omega = construct_vanishing_polynomial(k); // -1 + x^8
 
     // Prover computes commitment of f
     let com_f = kzg_commit(&gp, &f).unwrap();
@@ -291,16 +297,13 @@ fn test_product_check_fail() {
     let mut rng = ark_std::test_rng();
     // this degree is used for kzg setup. We need to commit to polynomial q of degree 12.
     let degree = 12;
+    let k = 8;
 
     // generate global parameters
     let gp = kzg_setup(degree);
 
-    // define omega as element of order 8
-    let mut exponent = Fr::MODULUS;
-    exponent.sub_with_borrow(&BigInteger256::from(1_u64));
-    exponent >>= 3; // divide exponent by 8
-    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
-    let Omega: Vec<Fr> = (0..8).map(|i| omega.pow([i as u64])).collect();
+    // define Omega as subset of size k
+    let Omega = construct_Omega(k);
 
     // generate f randomly so its product over Omega is not equal to 1
     let f = random_polynomial(&mut rng, 10);
@@ -319,13 +322,7 @@ fn test_product_check_fail() {
     assert_eq!(f.degree(), 10, "f must be of degree 10");
 
     // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
-    let k = 8;
-    let mut coefficients = vec![Fr::from(-1)];
-    coefficients.extend(vec![Fr::ZERO; k - 1]);
-    coefficients.push(Fr::ONE);
-    let Z_Omega = DensePolynomial {
-        coeffs: coefficients,
-    }; // -1 + x^8
+    let Z_Omega = construct_vanishing_polynomial(k); // -1 + x^8
 
     // Prover computes commitment of f
     let com_f = kzg_commit(&gp, &f).unwrap();
@@ -392,16 +389,13 @@ fn test_product_check_rational_functions_success() {
     let mut rng = ark_std::test_rng();
     // this degree is used for kzg setup. We need to commit to polynomial q of degree 12.
     let degree = 12;
+    let k = 8;
 
     // generate global parameters
     let gp = kzg_setup(degree);
 
-    // define omega as element of order 8
-    let mut exponent = Fr::MODULUS;
-    exponent.sub_with_borrow(&BigInteger256::from(1_u64));
-    exponent >>= 3; // divide exponent by 8
-    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
-    let Omega: Vec<Fr> = (0..8).map(|i| omega.pow([i as u64])).collect();
+    // define Omega as subset of size k
+    let Omega = construct_Omega(k);
 
     // compute x_vals and f_y_vals,g_y_vals
     let mut x_vals = Omega.clone();
@@ -432,13 +426,7 @@ fn test_product_check_rational_functions_success() {
     assert_eq!(g.degree(), 10, "g must be of degree 10");
 
     // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
-    let k = 8;
-    let mut coefficients = vec![Fr::from(-1)];
-    coefficients.extend(vec![Fr::ZERO; k - 1]);
-    coefficients.push(Fr::ONE);
-    let Z_Omega = DensePolynomial {
-        coeffs: coefficients,
-    }; // -1 + x^8
+    let Z_Omega = construct_vanishing_polynomial(k); // -1 + x^8
 
     // Prover computes commitments of f,g
     let com_f = kzg_commit(&gp, &f).unwrap();
@@ -511,16 +499,13 @@ fn test_product_check_rational_functions_fail() {
     let mut rng = ark_std::test_rng();
     // this degree is used for kzg setup. We need to commit to polynomial q of degree 12.
     let degree = 12;
+    let k = 8;
 
     // generate global parameters
     let gp = kzg_setup(degree);
 
-    // define omega as element of order 8
-    let mut exponent = Fr::MODULUS;
-    exponent.sub_with_borrow(&BigInteger256::from(1_u64));
-    exponent >>= 3; // divide exponent by 8
-    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
-    let Omega: Vec<Fr> = (0..8).map(|i| omega.pow([i as u64])).collect();
+    // define Omega as subset of size k
+    let Omega = construct_Omega(k);
 
     // generate f,g randomly so the product of their rational function over Omega is not equal to 1
     let f = random_polynomial(&mut rng, 10);
@@ -542,13 +527,7 @@ fn test_product_check_rational_functions_fail() {
     assert_eq!(g.degree(), 10, "g must be of degree 10");
 
     // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
-    let k = 8;
-    let mut coefficients = vec![Fr::from(-1)];
-    coefficients.extend(vec![Fr::ZERO; k - 1]);
-    coefficients.push(Fr::ONE);
-    let Z_Omega = DensePolynomial {
-        coeffs: coefficients,
-    }; // -1 + x^8
+    let Z_Omega = construct_vanishing_polynomial(k); // -1 + x^8
 
     // Prover computes commitments of f,g
     let com_f = kzg_commit(&gp, &f).unwrap();
@@ -621,16 +600,13 @@ fn test_sum_check_success() {
     let mut rng = ark_std::test_rng();
     // this degree is used for kzg setup.
     let degree = 10;
+    let k = 8;
 
     // generate global parameters
     let gp = kzg_setup(degree);
 
-    // define omega as element of order 8
-    let mut exponent = Fr::MODULUS;
-    exponent.sub_with_borrow(&BigInteger256::from(1_u64));
-    exponent >>= 3; // divide exponent by 8
-    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
-    let Omega: Vec<Fr> = (0..8).map(|i| omega.pow([i as u64])).collect();
+    // define Omega as subset of size k
+    let Omega = construct_Omega(k);
 
     // compute x_vals and y_vals and interpolate f
     let mut x_vals = Omega.clone();
@@ -660,13 +636,7 @@ fn test_sum_check_success() {
     assert_eq!(f.degree(), 10, "f must be of degree 10");
 
     // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
-    let k = 8;
-    let mut coefficients = vec![Fr::from(-1)];
-    coefficients.extend(vec![Fr::ZERO; k - 1]);
-    coefficients.push(Fr::ONE);
-    let Z_Omega = DensePolynomial {
-        coeffs: coefficients,
-    }; // -1 + x^8
+    let Z_Omega = construct_vanishing_polynomial(k); // -1 + x^8
 
     // Prover computes commitment of f
     let com_f = kzg_commit(&gp, &f).unwrap();
@@ -733,16 +703,13 @@ fn test_sum_check_fail() {
     let mut rng = ark_std::test_rng();
     // this degree is used for kzg setup.
     let degree = 10;
+    let k = 8;
 
     // generate global parameters
     let gp = kzg_setup(degree);
 
-    // define omega as element of order 8
-    let mut exponent = Fr::MODULUS;
-    exponent.sub_with_borrow(&BigInteger256::from(1_u64));
-    exponent >>= 3; // divide exponent by 8
-    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
-    let Omega: Vec<Fr> = (0..8).map(|i| omega.pow([i as u64])).collect();
+    // define Omega as subset of size k
+    let Omega = construct_Omega(k);
 
     // generate f randomly so its sum over Omega is not equal to 0
     let f = random_polynomial(&mut rng, 10);
@@ -761,13 +728,7 @@ fn test_sum_check_fail() {
     assert_eq!(f.degree(), 10, "f must be of degree 10");
 
     // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
-    let k = 8;
-    let mut coefficients = vec![Fr::from(-1)];
-    coefficients.extend(vec![Fr::ZERO; k - 1]);
-    coefficients.push(Fr::ONE);
-    let Z_Omega = DensePolynomial {
-        coeffs: coefficients,
-    }; // -1 + x^8
+    let Z_Omega = construct_vanishing_polynomial(k); // -1 + x^8
 
     // Prover computes commitment of f
     let com_f = kzg_commit(&gp, &f).unwrap();
