@@ -19,7 +19,7 @@ fn test_kzg_setup() {
     assert_eq!(
         gp.tau_powers_g1.len(),
         degree + 1,
-        "tau_powers_g1 must be of degree d+1"
+        "Length of tau_powers_g1 must be d+1"
     );
 
     for i in 0..degree {

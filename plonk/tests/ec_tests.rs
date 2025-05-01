@@ -3,6 +3,7 @@ use ark_ec::CurveGroup;
 use ark_ec::{AdditiveGroup, PrimeGroup, pairing::Pairing};
 use ark_ff::UniformRand;
 use ark_std::Zero;
+use plonk::common::pairing_utils::{pairing_product, pairing_value};
 
 #[test]
 fn test_closure() {
@@ -86,4 +87,24 @@ fn test_pairing() {
     let e2 = Bls12_381::pairing(G1::generator() * (x * y), G2::generator());
 
     assert_eq!(e1, e2, "e1 and e2 are not equal");
+}
+
+#[test]
+fn test_product_pairing() {
+    let mut rng = ark_std::test_rng();
+    // Let's sample uniformly random scalars
+    let x = Fr::rand(&mut rng);
+    let y = Fr::rand(&mut rng);
+    let z = x + y;
+
+    let e_x = Bls12_381::pairing(G1::generator() * x, G2::generator());
+    let e_y = Bls12_381::pairing(G1::generator() * y, G2::generator());
+    let e_z = Bls12_381::pairing(G1::generator() * z, G2::generator());
+
+    let product = pairing_product(&e_x, &e_y);
+    assert_eq!(
+        product,
+        *pairing_value(&e_z),
+        "e_x*e_y and e_z are not equal"
+    );
 }
