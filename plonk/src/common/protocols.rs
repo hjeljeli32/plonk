@@ -87,7 +87,7 @@ pub fn verify_zero_test(
         && kzg_verify(gp, com_f, r, f_r, proof_f)
 }
 
-// Constructs the polynomials t and t1 based on polynomial f and subset Omega
+// Constructs the polynomials t and t1 based on polynomial f and subset Omega for product check
 pub fn compute_t_and_t1_product_check(
     Omega: &Vec<Fr>,
     f: &DensePolynomial<Fr>,
@@ -200,7 +200,7 @@ pub fn verify_product_check(
         && kzg_verify(gp, com_f, r * w, f_w_r, proof_f_w_r)
 }
 
-// Constructs the polynomials t and t1 based on polynomials f,g and subset Omega
+// Constructs the polynomials t and t1 based on polynomials f,g and subset Omega for product check over rational functions
 pub fn compute_t_and_t1_product_check_rational_functions(
     Omega: &Vec<Fr>,
     f: &DensePolynomial<Fr>,
@@ -331,7 +331,7 @@ pub fn verify_product_check_rational_functions(
         && kzg_verify(gp, com_g, r * w, g_w_r, proof_g_w_r)
 }
 
-// Constructs the polynomials t and t1 based on polynomial f and subset Omega
+// Constructs the polynomials t and t1 based on polynomial f and subset Omega for sum check
 pub fn compute_t_and_t1_sum_check(
     Omega: &Vec<Fr>,
     f: &DensePolynomial<Fr>,
@@ -442,4 +442,177 @@ pub fn verify_sum_check(
         && kzg_verify(gp, com_t, r * w, t_w_r, proof_t_w_r)
         && kzg_verify(gp, com_q, r, q_r, proof_q_r)
         && kzg_verify(gp, com_f, r * w, f_w_r, proof_f_w_r)
+}
+
+// Constructs the polynomials t and t1 based on polynomials f,g and subset Omega for prescribed permutation check
+pub fn compute_t_and_t1_prescribed_permutation_check(
+    Omega: &Vec<Fr>,
+    f: &DensePolynomial<Fr>,
+    g: &DensePolynomial<Fr>,
+    W: &DensePolynomial<Fr>,
+    r: Fr,
+    s: Fr,
+) -> (DensePolynomial<Fr>, DensePolynomial<Fr>) {
+    let mut rng = ark_std::test_rng();
+
+    // compute evaluations of t over Omega as product of evaluations r-sW(w^i)-f(w^i) divided by r-sw^i-g(w^i)
+    let k = Omega.len();
+    let mut t_y_vals: Vec<Fr> = (0..k)
+        .map(|i| {
+            (0..i + 1)
+                .map(|j| {
+                    (
+                        Omega[j],
+                        f.evaluate(&Omega[j]),
+                        g.evaluate(&Omega[j]),
+                        W.evaluate(&Omega[j]),
+                    )
+                })
+                .map(|(w_j, f_eval, g_eval, W_eval)| {
+                    (r - s * W_eval - f_eval) * (r - s * w_j - g_eval).inverse().unwrap()
+                })
+                .reduce(|t_eval, eval| t_eval * eval)
+                .unwrap()
+        })
+        .collect();
+    t_y_vals.extend((0..(f.degree() + 1 - k)).map(|_| Fr::rand(&mut rng)));
+    let mut t_x_vals = Omega.clone();
+    t_x_vals.extend((0..(f.degree() + 1 - k)).map(|_| Fr::rand(&mut rng)));
+    // interpolate polynomial t
+    let t = interpolate_polynomial(&t_x_vals, &t_y_vals);
+
+    // t(w*x)
+    let t_w_x = compose_polynomials(
+        &t,
+        &DensePolynomial {
+            coeffs: vec![Fr::ZERO, Omega[1]],
+        },
+    );
+    // r-s*w*x
+    let r_s_w_x = DensePolynomial {
+        coeffs: vec![r, -s * Omega[1]],
+    };
+    // g(w*x)
+    let g_w_x = compose_polynomials(
+        &g,
+        &DensePolynomial {
+            coeffs: vec![Fr::ZERO, Omega[1]],
+        },
+    );
+    // W(w*x)
+    let W_w_x = compose_polynomials(
+        &W,
+        &DensePolynomial {
+            coeffs: vec![Fr::ZERO, Omega[1]],
+        },
+    );
+    // r-s*W(w*x)
+    let r_s_W_w_x = compose_polynomials(
+        &DensePolynomial {
+            coeffs: vec![r, -s],
+        },
+        &W_w_x,
+    );
+    // f(w*x)
+    let f_w_x = compose_polynomials(
+        &f,
+        &DensePolynomial {
+            coeffs: vec![Fr::ZERO, Omega[1]],
+        },
+    );
+    // t1(x) = t(w*x)(r - s*w*x - g(w*x)) - t(x)(r - s*W(w*x) - f(w*x))
+    let t1 = &t_w_x * (&r_s_w_x - &g_w_x) - &t * (r_s_W_w_x - &f_w_x);
+
+    (t, t1)
+}
+
+// Generates the proof of prescribed permutation check on subset Omega
+pub fn prove_prescribed_permutation_check(
+    gp: &GlobalParameters,
+    w: Fr,
+    k: usize,
+    t: &DensePolynomial<Fr>,
+    q: &DensePolynomial<Fr>,
+    f: &DensePolynomial<Fr>,
+    g: &DensePolynomial<Fr>,
+    W: &DensePolynomial<Fr>,
+    rp: Fr,
+) -> (Fr, G1, Fr, G1, Fr, G1, Fr, G1, Fr, G1, Fr, G1, Fr, G1) {
+    // compute t(w^(k-1)) and its proof
+    let (t_w_k_minus_1, proof_t_w_k_minus_1) = kzg_evaluate(gp, t, w.pow([k as u64 - 1]));
+    // compute t(rp) and its proof
+    let (t_rp, proof_t_rp) = kzg_evaluate(gp, t, rp);
+    // compute t(w*rp) and its proof
+    let (t_w_rp, proof_t_w_rp) = kzg_evaluate(gp, t, rp * w);
+    // compute q(rp) and its proof
+    let (q_rp, proof_q_rp) = kzg_evaluate(gp, q, rp);
+    // compute f(w*rp) and its proof
+    let (f_w_rp, proof_f_w_rp) = kzg_evaluate(gp, f, rp * w);
+    // compute g(w*rp) and its proof
+    let (g_w_rp, proof_g_w_rp) = kzg_evaluate(gp, g, rp * w);
+    // compute W(w*rp) and its proof
+    let (W_w_rp, proof_W_w_rp) = kzg_evaluate(gp, W, rp * w);
+
+    (
+        t_w_k_minus_1,
+        proof_t_w_k_minus_1,
+        t_rp,
+        proof_t_rp,
+        t_w_rp,
+        proof_t_w_rp,
+        q_rp,
+        proof_q_rp,
+        f_w_rp,
+        proof_f_w_rp,
+        g_w_rp,
+        proof_g_w_rp,
+        W_w_rp,
+        proof_W_w_rp,
+    )
+}
+
+// Verifies the proof of prescribed permutation check on subset Omega
+pub fn verify_prescribed_permutation_check(
+    gp: &GlobalParameters,
+    w: Fr,
+    k: usize,
+    com_f: G1,
+    com_g: G1,
+    com_W: G1,
+    com_q: G1,
+    com_t: G1,
+    r: Fr,
+    s: Fr,
+    rp: Fr,
+    t_w_k_minus_1: Fr,
+    proof_t_w_k_minus_1: G1,
+    t_rp: Fr,
+    proof_t_rp: G1,
+    t_w_rp: Fr,
+    proof_t_w_rp: G1,
+    q_rp: Fr,
+    proof_q_rp: G1,
+    f_w_rp: Fr,
+    proof_f_w_rp: G1,
+    g_w_rp: Fr,
+    proof_g_w_rp: G1,
+    W_w_rp: Fr,
+    proof_W_w_rp: G1,
+) -> bool {
+    (t_w_k_minus_1 == Fr::ONE)
+        && (t_w_rp * (r - s * w * rp - g_w_rp) - t_rp * (r - s * W_w_rp - f_w_rp)
+            == q_rp * (rp.pow([k as u64]) - Fr::ONE))
+        && kzg_verify(
+            gp,
+            com_t,
+            w.pow([k as u64 - 1]),
+            t_w_k_minus_1,
+            proof_t_w_k_minus_1,
+        )
+        && kzg_verify(gp, com_t, rp, t_rp, proof_t_rp)
+        && kzg_verify(gp, com_t, rp * w, t_w_rp, proof_t_w_rp)
+        && kzg_verify(gp, com_q, rp, q_rp, proof_q_rp)
+        && kzg_verify(gp, com_f, rp * w, f_w_rp, proof_f_w_rp)
+        && kzg_verify(gp, com_g, rp * w, g_w_rp, proof_g_w_rp)
+        && kzg_verify(gp, com_W, rp * w, W_w_rp, proof_W_w_rp)
 }
