@@ -58,7 +58,7 @@ pub fn kzg_commit(gp: &GlobalParameters, f: &DensePolynomial<Fr>) -> Result<G1, 
     }
 }
 
-// Evaluate polynomial f on a given point u and generates proof
+// Evaluate polynomial f on a given point u and generate proof
 pub fn kzg_evaluate(gp: &GlobalParameters, f: &DensePolynomial<Fr>, u: Fr) -> (Fr, G1) {
     // compute v as evaluation of f on u
     let v = f.evaluate(&u);
@@ -86,7 +86,7 @@ pub fn kzg_evaluate(gp: &GlobalParameters, f: &DensePolynomial<Fr>, u: Fr) -> (F
     (v, proof)
 }
 
-// Verify the proof that commited polynomial f evaluates to v on point u
+// Verify the proof that committed polynomial f evaluates to v on point u
 pub fn kzg_verify(gp: &GlobalParameters, com_f: G1, u: Fr, v: Fr, proof: G1) -> bool {
     // compute left-hand side of pairing equality
     let e1 = Bls12_381::pairing(com_f - G1::generator() * v, G2::generator());
