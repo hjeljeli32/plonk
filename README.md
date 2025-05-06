@@ -39,18 +39,18 @@ The project is organized into modular components that reflect the natural layeri
 Protocols for proving properties of committed polynomials:
 
 - **Equality Check:** Ensure two committed polynomials are equal.
-- **Zero Test:** Show that a polynomial vanishes on a domain \\( \\Omega \\).
-- **Sum Check:** Prove that the sum over \\( \\Omega \\) equals 0.
-- **Product Check:** Prove that the product over \\( \\Omega \\) equals 1.
-- **Product over Rational Functions:** Generalization to \\( f/g \\).
-- **Permutation Check:** Prove \\( f(\\Omega) \\) is a permutation of \\( g(\\Omega) \\).
-- **Prescribed Permutation Check:** Prove \\( f(\\Omega) = g(W(\\Omega)) \\) for known permutation \\( W \\).
+- **Zero Test:** Show that a polynomial vanishes on a domain Ω.
+- **Sum Check:** Prove that the sum over Ω equals 0.
+- **Product Check:** Prove that the product over Ω equals 1.
+- **Product over Rational Functions:** Generalization to f/g.
+- **Permutation Check:** Prove f(Ω) is a permutation of g(Ω).
+- **Prescribed Permutation Check:** Prove f(Ω) = g(W(Ω)) for known permutation W.
 
 ### 🔧 Plonk IOP Protocol (WIP)
 An IOP-based implementation of the Plonk protocol for a **simple arithmetic circuit**.  
 Steps:
 
-1. **Encode the computation trace** as a polynomial \\( T(x) \\).
+1. **Encode the computation trace** as a polynomial T(x).
 2. **Prove correctness of computation**:
    - Inputs are encoded correctly.
    - Gates are applied correctly.
