@@ -5,7 +5,7 @@ use ark_poly::{
     univariate::{DenseOrSparsePolynomial, DensePolynomial},
 };
 
-use crate::common::univariate_polynomials::{compose_polynomials, interpolate_polynomial};
+use crate::common::polynomials::{compose_polynomials, interpolate_polynomial};
 
 use super::kzg::{GlobalParameters, kzg_evaluate, kzg_verify};
 

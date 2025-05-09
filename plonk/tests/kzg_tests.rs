@@ -8,7 +8,7 @@ use ark_poly::{
 use ark_std::rand::Rng;
 use plonk::common::{
     kzg::{CommitError, GlobalParameters, kzg_commit, kzg_evaluate, kzg_setup, kzg_verify},
-    univariate_polynomials::random_polynomial,
+    polynomials::random_polynomial,
 };
 
 #[test]

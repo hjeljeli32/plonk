@@ -13,7 +13,7 @@ use plonk::common::{
         verify_product_check, verify_product_check_rational_functions, verify_sum_check,
         verify_zero_test,
     },
-    univariate_polynomials::{interpolate_polynomial, random_polynomial},
+    polynomials::{interpolate_polynomial, random_polynomial},
 };
 
 fn construct_Omega(k: usize) -> Vec<Fr> {

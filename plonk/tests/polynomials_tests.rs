@@ -3,7 +3,7 @@ use ark_ff::{AdditiveGroup, BigInteger, BigInteger256, FftField, Field, PrimeFie
 use ark_poly::polynomial::univariate::*;
 use ark_poly::{DenseUVPolynomial, Polynomial};
 use ark_std::{UniformRand, rand::Rng, test_rng};
-use plonk::common::univariate_polynomials::*;
+use plonk::common::polynomials::*;
 use std::collections::HashSet;
 
 #[test]
