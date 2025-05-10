@@ -91,18 +91,22 @@ Steps:
 
 ```
 src/
-├── common/                  # Shared helpers (e.g. pairing accessors)
-├── kzg/                     # KZG commitment logic
-├── polynomials/             # Polynomial operations
-├── protocols/               # Poly-IOP gadgets (e.g., equality, sum-check)
-├── plonk/                   # Plonk IOP system (WIP)
-└── bin/
-    ├── prover.rs            # Executable for the prover
-    └── verifier.rs          # Executable for the verifier
+├── common/
+    ├── kzg.rs               # KZG commitment logic
+    ├── mod.rs
+    ├── polynomials.rs       # Polynomial operations
+    ├── protocols            # Poly-IOP gadgets (e.g., equality, sum-check)
+    └── utils.rs             # Shared helpers (e.g. pairing accessors)
+├── prover/                  # Executable for the prover (WIP)
+    ├── mod.rs
+    └── part1.rs 
+├── verifier/                # Executable for the verifier (WIP)
+    └── mod.rs           
+└── lib.rs
 
 tests/
-├── field_tests.rs           # Tests for field operations
 ├── ec_tests.rs              # Tests for elliptic curve group and pairing ops
+├── field_tests.rs           # Tests for field operations
 ├── kzg_tests.rs             # Tests for commitment, opening, and verification
 ├── protocols_tests.rs       # Tests for poly-IOP gadgets like permutation checks
 ├── polynomials_tests.rs     # Tests for univariate polynomial evaluation and logic

@@ -1,3 +1,5 @@
+use crate::common::utils::construct_Omega;
+
 pub fn run() -> () {
     println!("Executing part 1...");
 
@@ -5,4 +7,8 @@ pub fn run() -> () {
     let number_inputs = 3; // Circuit has 2 public inputs (x1, x2) and 1 witness w
     let d = 3 * number_gates + number_inputs;
     assert_eq!(d, 12, "d must be equal to 12");
+
+    // Define Omega as subgroup of size d
+    let Omega = construct_Omega(d);
+
 }
