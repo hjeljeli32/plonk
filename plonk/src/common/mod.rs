@@ -1,4 +1,4 @@
 pub mod kzg;
-pub mod pairing_utils;
-pub mod protocols;
 pub mod polynomials;
+pub mod protocols;
+pub mod utils;

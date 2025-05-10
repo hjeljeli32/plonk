@@ -1,9 +1,9 @@
 use ark_bls12_381::{Bls12_381, Fr, G1Projective as G1, G2Projective as G2};
 use ark_ec::CurveGroup;
-use ark_ec::{AdditiveGroup, PrimeGroup, pairing::Pairing};
+use ark_ec::{pairing::Pairing, AdditiveGroup, PrimeGroup};
 use ark_ff::UniformRand;
 use ark_std::Zero;
-use plonk::common::pairing_utils::{pairing_product, pairing_value};
+use plonk::common::utils::{pairing_product, pairing_value};
 
 #[test]
 fn test_closure() {

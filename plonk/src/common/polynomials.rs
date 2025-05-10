@@ -1,8 +1,8 @@
 use ark_bls12_381::Fr;
 use ark_ff::Field;
-use ark_poly::DenseUVPolynomial;
 use ark_poly::polynomial::univariate::*;
-use ark_std::{Zero, rand::Rng};
+use ark_poly::DenseUVPolynomial;
+use ark_std::{rand::Rng, Zero};
 use rayon::prelude::*;
 
 /// Generates a random polynomial of certain degree

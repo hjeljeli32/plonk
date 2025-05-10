@@ -1,13 +1,13 @@
 use ark_bls12_381::{Fr, G1Projective as G1};
 use ark_ff::{AdditiveGroup, Field, UniformRand};
 use ark_poly::{
-    Polynomial,
     univariate::{DenseOrSparsePolynomial, DensePolynomial},
+    Polynomial,
 };
 
 use crate::common::polynomials::{compose_polynomials, interpolate_polynomial};
 
-use super::kzg::{GlobalParameters, kzg_evaluate, kzg_verify};
+use super::kzg::{kzg_evaluate, kzg_verify, GlobalParameters};
 
 // Generates a proof that two previously committed polynomials f,g are equal
 pub fn prove_equality(

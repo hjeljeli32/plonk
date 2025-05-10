@@ -101,11 +101,12 @@ src/
     └── verifier.rs          # Executable for the verifier
 
 tests/
-├── bls12_381_tests.rs       # Tests for field operations
+├── field_tests.rs           # Tests for field operations
 ├── ec_tests.rs              # Tests for elliptic curve group and pairing ops
 ├── kzg_tests.rs             # Tests for commitment, opening, and verification
 ├── protocols_tests.rs       # Tests for poly-IOP gadgets like permutation checks
-└── polynomials_tests.rs     # Tests for univariate polynomial evaluation and logic
+├── polynomials_tests.rs     # Tests for univariate polynomial evaluation and logic
+└── utils_tests.rs           # Tests for helpers functions 
 ```
 
 ---

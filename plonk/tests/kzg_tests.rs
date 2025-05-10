@@ -1,13 +1,13 @@
 use ark_bls12_381::{Bls12_381, Fr, G1Projective as G1, G2Projective as G2};
-use ark_ec::{PrimeGroup, pairing::Pairing};
+use ark_ec::{pairing::Pairing, PrimeGroup};
 use ark_ff::{Field, UniformRand};
 use ark_poly::{
-    Polynomial,
     univariate::{DenseOrSparsePolynomial, DensePolynomial},
+    Polynomial,
 };
 use ark_std::rand::Rng;
 use plonk::common::{
-    kzg::{CommitError, GlobalParameters, kzg_commit, kzg_evaluate, kzg_setup, kzg_verify},
+    kzg::{kzg_commit, kzg_evaluate, kzg_setup, kzg_verify, CommitError, GlobalParameters},
     polynomials::random_polynomial,
 };
 

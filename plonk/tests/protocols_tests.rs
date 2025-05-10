@@ -1,9 +1,10 @@
 use ark_bls12_381::Fr;
-use ark_ff::{AdditiveGroup, BigInteger, BigInteger256, FftField, Field, PrimeField, UniformRand};
-use ark_poly::{Polynomial, univariate::DensePolynomial};
+use ark_ff::{AdditiveGroup, Field, UniformRand};
+use ark_poly::Polynomial;
 use ark_std::rand::seq::SliceRandom;
 use plonk::common::{
     kzg::{kzg_commit, kzg_setup},
+    polynomials::{interpolate_polynomial, random_polynomial},
     protocols::{
         compute_q_zero_test, compute_t_and_t1_prescribed_permutation_check,
         compute_t_and_t1_product_check, compute_t_and_t1_product_check_rational_functions,
@@ -13,32 +14,8 @@ use plonk::common::{
         verify_product_check, verify_product_check_rational_functions, verify_sum_check,
         verify_zero_test,
     },
-    polynomials::{interpolate_polynomial, random_polynomial},
+    utils::{construct_Omega, construct_vanishing_polynomial},
 };
-
-fn construct_Omega(k: usize) -> Vec<Fr> {
-    assert!(k.is_power_of_two(), "k must be a power of 2");
-    let mut modulus_minus_1 = Fr::MODULUS;
-    modulus_minus_1.sub_with_borrow(&BigInteger256::from(1_u64));
-    let exponent = modulus_minus_1 >> k.ilog2(); // divide by k
-    assert_eq!(
-        exponent.mul(&BigInteger256::from(k as u64)).0,
-        modulus_minus_1,
-        "exponent must be divisible by k"
-    );
-    let omega = Fr::GENERATOR.pow(exponent.0.to_vec());
-
-    (0..k).map(|i| omega.pow([i as u64])).collect()
-}
-
-fn construct_vanishing_polynomial(k: usize) -> DensePolynomial<Fr> {
-    let mut coefficients = vec![Fr::from(-1)];
-    coefficients.extend(vec![Fr::ZERO; k - 1]);
-    coefficients.push(Fr::ONE);
-    DensePolynomial {
-        coeffs: coefficients,
-    }
-}
 
 #[test]
 fn test_equality_success() {
