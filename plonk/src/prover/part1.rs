@@ -1,16 +1,12 @@
 use ark_bls12_381::Fr;
 use ark_poly::{univariate::DensePolynomial, Polynomial};
 
-use crate::common::{polynomials::interpolate_polynomial, utils::construct_Omega};
+use crate::{common::{polynomials::interpolate_polynomial, utils::construct_Omega}, setup::SetupOutput};
 
-pub fn run() -> (usize, usize, Vec<Fr>, DensePolynomial<Fr>) {
+pub fn run(setup: &SetupOutput) -> (Vec<Fr>, DensePolynomial<Fr>) {
     println!("Executing part 1...");
 
-    let number_gates = 3; // Circuit has 2 addition gates and 1 multiplication gate
-    let number_public_inputs = 2; // Circuit has 2 public inputs (x1, x2)
-    let number_witnesses = 1; // Circuit has 1 witness w
-    let d = 3 * number_gates + number_public_inputs + number_witnesses;
-    assert_eq!(d, 12, "d must be equal to 12");
+    let d = setup.d;
 
     // Define Omega as subgroup of size d
     let Omega = construct_Omega(d);
@@ -67,5 +63,5 @@ pub fn run() -> (usize, usize, Vec<Fr>, DensePolynomial<Fr>) {
     let T = interpolate_polynomial(&x_vals, &y_vals);
     assert_eq!(T.degree(), d - 1, "T must be of degree d-1");
 
-    (number_public_inputs, d, Omega, T)
+    (Omega, T)
 }

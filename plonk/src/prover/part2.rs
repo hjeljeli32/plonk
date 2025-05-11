@@ -1,10 +1,13 @@
 use ark_bls12_381::Fr;
 use ark_poly::{univariate::DensePolynomial, Polynomial};
 
-use crate::common::polynomials::interpolate_polynomial;
+use crate::{common::polynomials::interpolate_polynomial, setup::SetupOutput};
 
-pub fn run(number_public_inputs: usize, d: usize, Omega: &Vec<Fr>, T: &DensePolynomial<Fr>) -> () {
+pub fn run(setup: &SetupOutput, Omega: &Vec<Fr>, T: &DensePolynomial<Fr>) -> () {
     println!("Executing part 2...");
+
+    let number_public_inputs = setup.number_public_inputs;
+    let d = setup.d;
 
     let mut Omega_inputs = vec![];
     (0..number_public_inputs).for_each(|i| Omega_inputs.push(Omega[d - 1 - i]));

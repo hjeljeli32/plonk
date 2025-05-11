@@ -3,14 +3,16 @@ pub mod part2;
 
 use std::time::Instant;
 
-pub fn run() -> () {
+use crate::setup::SetupOutput;
+
+pub fn run(setup: &SetupOutput) -> () {
     println!("Executing prover...");
     let start = Instant::now();
 
-    let (number_public_inputs, d, Omega, T) = part1::run();
+    let (Omega, T) = part1::run(&setup);
     println!("✅ Part1 took: {:?}", start.elapsed());
     let start = Instant::now();
 
-    part2::run(number_public_inputs, d, &Omega, &T);
+    part2::run(&setup, &Omega, &T);
     println!("✅ Part2 took: {:?}", start.elapsed());
 }

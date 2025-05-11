@@ -1,4 +1,5 @@
 use plonk::prover;
+use plonk::setup::SetupOutput;
 use plonk::setup::json::SetupOutputJson;
 use std::fs::File;
 use std::io::BufReader;
@@ -13,13 +14,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     let reader = BufReader::new(file);
     let setup_json: SetupOutputJson = serde_json::from_reader(reader)?;
 
-    println!("✅ Loaded setup parameters from srs.json");
-    println!("\tNumber of gates: {}", setup_json.number_gates);
-    println!("\tNumber of public inputs: {}", setup_json.number_public_inputs);
-    println!("\tNumber of witnesses: {}", setup_json.number_witnesses);
-    println!("\td: {}", setup_json.d);    
+    let setup = setup_json.into_setup_output();
 
-    prover::run();
+    println!("✅ Loaded setup parameters from srs.json");
+    println!("\tNumber of gates: {}", setup.number_gates);
+    println!("\tNumber of public inputs: {}", setup.number_public_inputs);
+    println!("\tNumber of witnesses: {}", setup.number_witnesses);
+    println!("\td: {}", setup.d);    
+    println!("\tLength of tau_powers_g1: {}", setup.gp.tau_powers_g1.len());
+
+    prover::run(&setup);
 
     Ok(())
 }
