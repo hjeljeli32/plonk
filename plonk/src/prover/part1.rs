@@ -1,14 +1,15 @@
 use ark_bls12_381::Fr;
-use ark_poly::Polynomial;
+use ark_poly::{univariate::DensePolynomial, Polynomial};
 
 use crate::common::{polynomials::interpolate_polynomial, utils::construct_Omega};
 
-pub fn run() -> () {
+pub fn run() -> (usize, usize, Vec<Fr>, DensePolynomial<Fr>) {
     println!("Executing part 1...");
 
     let number_gates = 3; // Circuit has 2 addition gates and 1 multiplication gate
-    let number_inputs = 3; // Circuit has 2 public inputs (x1, x2) and 1 witness w
-    let d = 3 * number_gates + number_inputs;
+    let number_public_inputs = 2; // Circuit has 2 public inputs (x1, x2)
+    let number_witnesses = 1; // Circuit has 1 witness w
+    let d = 3 * number_gates + number_public_inputs + number_witnesses;
     assert_eq!(d, 12, "d must be equal to 12");
 
     // Define Omega as subgroup of size d
@@ -16,7 +17,7 @@ pub fn run() -> () {
     assert_eq!(Omega.len(), d, "Omega must be of length d");
 
     let (mut x_vals, mut y_vals) = (vec![], vec![]);
-    
+
     // T encodes all inputs: T(w^-j) = input#j
     // T(w^-1) = 5
     x_vals.push(Omega[d - 1]);
@@ -64,6 +65,7 @@ pub fn run() -> () {
 
     // Interpolate the polynomial T that enodes the entire trace
     let T = interpolate_polynomial(&x_vals, &y_vals);
-    assert_eq!(T.degree(), d-1, "T must be of degree d-1");
+    assert_eq!(T.degree(), d - 1, "T must be of degree d-1");
 
+    (number_public_inputs, d, Omega, T)
 }

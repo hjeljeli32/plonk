@@ -5,6 +5,7 @@ use ark_poly::{
     univariate::{DenseOrSparsePolynomial, DensePolynomial},
     Polynomial,
 };
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -13,7 +14,7 @@ pub enum CommitError {
     CommitFailed,
 }
 
-#[derive(Clone)]
+#[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct GlobalParameters {
     pub tau_powers_g1: Vec<G1>, // Vector of tau^i * G1
     pub tau_g2: G2,             // Element tau * G2
