@@ -6,10 +6,9 @@ use std::time::Instant;
 use crate::setup::SetupOutput;
 
 pub fn run(setup: &SetupOutput) -> () {
-    println!("Executing prover...");
     let start = Instant::now();
 
-    let (Omega, T) = part1::run(&setup);
+    let (Omega, T) = part1::run(&setup).unwrap();
     println!("✅ Part1 took: {:?}", start.elapsed());
     let start = Instant::now();
 

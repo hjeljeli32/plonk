@@ -1,9 +1,9 @@
 use ark_bls12_381::Fr;
 use ark_poly::{univariate::DensePolynomial, Polynomial};
 
-use crate::{common::{polynomials::interpolate_polynomial, utils::construct_Omega}, setup::SetupOutput};
+use crate::{common::{kzg::kzg_commit, polynomials::interpolate_polynomial, proof::{Proof, ProofJson}, utils::construct_Omega}, setup::SetupOutput};
 
-pub fn run(setup: &SetupOutput) -> (Vec<Fr>, DensePolynomial<Fr>) {
+pub fn run(setup: &SetupOutput) -> Result<(Vec<Fr>, DensePolynomial<Fr>), Box<dyn std::error::Error>> {
     println!("Executing part 1...");
 
     let d = setup.d;
@@ -63,5 +63,18 @@ pub fn run(setup: &SetupOutput) -> (Vec<Fr>, DensePolynomial<Fr>) {
     let T = interpolate_polynomial(&x_vals, &y_vals);
     assert_eq!(T.degree(), d - 1, "T must be of degree d-1");
 
-    (Omega, T)
+    // Compute commitment of t
+    let com_t = kzg_commit(&setup.gp, &T).unwrap();
+
+    let proof = Proof {
+        com_t,
+    };
+    
+    // Write Proof to a file
+    let proof_json = ProofJson::from(&proof);
+    let json_str = serde_json::to_string_pretty(&proof_json)?;
+    std::fs::write("data/proof.json", json_str)?;
+    println!("✅ Proof written to data/proof.json");
+
+    Ok((Omega, T))
 }
