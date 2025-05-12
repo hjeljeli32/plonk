@@ -64,10 +64,10 @@ pub fn run(setup: &SetupOutput) -> Result<(Vec<Fr>, DensePolynomial<Fr>), Box<dy
     assert_eq!(T.degree(), d - 1, "T must be of degree d-1");
 
     // Compute commitment of t
-    let com_t = kzg_commit(&setup.gp, &T).unwrap();
+    let com_T = kzg_commit(&setup.gp, &T).unwrap();
 
     let proof = Proof {
-        com_t,
+        com_T,
     };
     
     // Write Proof to a file
