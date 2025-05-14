@@ -1,9 +1,9 @@
 pub mod json;
 
-use std::time::Instant;
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use crate::common::kzg::{kzg_setup, GlobalParameters};
-use crate::setup::json::{SetupOutputJson, GlobalParametersJson};
+use crate::setup::json::{GlobalParametersJson, SetupOutputJson};
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
+use std::time::Instant;
 
 #[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct SetupOutput {
@@ -15,14 +15,23 @@ pub struct SetupOutput {
 }
 
 pub fn convert_to_json_friendly(output: &SetupOutput) -> SetupOutputJson {
-    let tau_powers_g1 = output.gp.tau_powers_g1.iter().map(|g1| {
-        let mut bytes = Vec::new();
-        g1.serialize_compressed(&mut bytes).unwrap();
-        hex::encode(bytes)
-    }).collect();
+    let tau_powers_g1 = output
+        .gp
+        .tau_powers_g1
+        .iter()
+        .map(|g1| {
+            let mut bytes = Vec::new();
+            g1.serialize_compressed(&mut bytes).unwrap();
+            hex::encode(bytes)
+        })
+        .collect();
 
     let mut g2_bytes = Vec::new();
-    output.gp.tau_g2.serialize_compressed(&mut g2_bytes).unwrap();
+    output
+        .gp
+        .tau_g2
+        .serialize_compressed(&mut g2_bytes)
+        .unwrap();
 
     SetupOutputJson {
         number_gates: output.number_gates,
@@ -32,7 +41,7 @@ pub fn convert_to_json_friendly(output: &SetupOutput) -> SetupOutputJson {
         gp: GlobalParametersJson {
             tau_powers_g1,
             tau_g2: hex::encode(g2_bytes),
-        }
+        },
     }
 }
 

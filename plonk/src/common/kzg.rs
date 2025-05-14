@@ -14,7 +14,7 @@ pub enum CommitError {
     CommitFailed,
 }
 
-#[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
+#[derive(Clone, Debug, CanonicalSerialize, CanonicalDeserialize)]
 pub struct GlobalParameters {
     pub tau_powers_g1: Vec<G1>, // Vector of tau^i * G1
     pub tau_g2: G2,             // Element tau * G2

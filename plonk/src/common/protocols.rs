@@ -7,7 +7,10 @@ use ark_poly::{
 
 use crate::common::polynomials::{compose_polynomials, interpolate_polynomial};
 
-use super::kzg::{kzg_evaluate, kzg_verify, GlobalParameters};
+use super::{
+    kzg::{kzg_evaluate, kzg_verify, GlobalParameters},
+    utils::{construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots},
+};
 
 // Generates a proof that two previously committed polynomials f,g are equal
 pub fn prove_equality(
@@ -41,12 +44,22 @@ pub fn verify_equality(
 // Computes the quotient polynomial q of f by the vanishing polynomial Z_Omega
 pub fn compute_q_zero_test(k: usize, f: &DensePolynomial<Fr>) -> DensePolynomial<Fr> {
     // construct Z_Omega (vanishing polynomial)
-    let mut coefficients = vec![Fr::from(-1)];
-    coefficients.extend(vec![Fr::ZERO; k - 1]);
-    coefficients.push(Fr::ONE);
-    let Z_Omega = DensePolynomial {
-        coeffs: coefficients,
-    }; // -1 + x^k
+    let Z_Omega = construct_vanishing_polynomial(k);
+
+    // compute q as quotient of f by Z_Omega
+    let (q, _) =
+        DenseOrSparsePolynomial::divide_with_q_and_r(&(f).into(), &(&Z_Omega).into()).unwrap();
+
+    q
+}
+
+// Computes the quotient polynomial q of f by the vanishing polynomial Z_Omega defined by its roots
+pub fn compute_q_zero_test_from_roots(
+    roots: &Vec<Fr>,
+    f: &DensePolynomial<Fr>,
+) -> DensePolynomial<Fr> {
+    // construct Z_Omega (vanishing polynomial) defined by its roots
+    let Z_Omega = construct_vanishing_polynomial_from_roots(roots);
 
     // compute q as quotient of f by Z_Omega
     let (q, _) =
@@ -83,6 +96,25 @@ pub fn verify_zero_test(
     proof_q: G1,
 ) -> bool {
     (f_r == q_r * (r.pow([k as u64]) - Fr::ONE))
+        && kzg_verify(gp, com_q, r, q_r, proof_q)
+        && kzg_verify(gp, com_f, r, f_r, proof_f)
+}
+
+// Verifies the proof that a polynomial (previously committed) is zero on given roots
+pub fn verify_zero_on_roots_test(
+    gp: &GlobalParameters,
+    roots: &Vec<Fr>,
+    com_f: G1,
+    com_q: G1,
+    r: Fr,
+    f_r: Fr,
+    proof_f: G1,
+    q_r: Fr,
+    proof_q: G1,
+) -> bool {
+    let Z_Omega = construct_vanishing_polynomial_from_roots(roots);
+
+    (f_r == q_r * Z_Omega.evaluate(&r))
         && kzg_verify(gp, com_q, r, q_r, proof_q)
         && kzg_verify(gp, com_f, r, f_r, proof_f)
 }

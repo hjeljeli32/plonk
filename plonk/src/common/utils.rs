@@ -1,7 +1,10 @@
-use ark_bls12_381::Fr;
+use ark_bls12_381::{Fr, G1Projective as G1};
 use ark_ec::pairing::{Pairing, PairingOutput};
 use ark_ff::{AdditiveGroup, BigInteger, BigInteger256, FftField, Field, PrimeField, Zero};
 use ark_poly::univariate::DensePolynomial;
+use ark_serialize::CanonicalSerialize;
+use blake2::Blake2s256;
+use digest::Digest;
 use num_bigint::BigUint;
 
 // Construct a subgroup Omega of order k by computing a k-th root of unity omega then raise it to powers 0..k-1
@@ -42,6 +45,37 @@ pub fn construct_vanishing_polynomial(k: usize) -> DensePolynomial<Fr> {
     DensePolynomial {
         coeffs: coefficients,
     }
+}
+
+// Construct Vanishing Polynomial defined by its roots
+pub fn construct_vanishing_polynomial_from_roots(roots: &Vec<Fr>) -> DensePolynomial<Fr> {
+    let mut vanishing_polynomial = DensePolynomial {
+        coeffs: vec![Fr::ONE],
+    };
+    roots.iter().for_each(|root| {
+        vanishing_polynomial = &vanishing_polynomial
+            * &DensePolynomial {
+                coeffs: vec![-*root, Fr::ONE],
+            }
+    });
+    vanishing_polynomial
+}
+
+/// Derive a field element from a commitment using Blake2s256
+pub fn derive_challenge_from_commitment(commitment: &G1) -> Fr {
+    let mut bytes = Vec::new();
+    commitment
+        .serialize_compressed(&mut bytes)
+        .expect("serialization should not fail");
+
+    // Hash to 32 bytes
+    let hash = Blake2s256::digest(&bytes);
+
+    // Interpret as big-endian integer mod Fr::MODULUS
+    let mut hash_bytes = [0u8; 32];
+    hash_bytes.copy_from_slice(&hash[0..32]);
+
+    Fr::from_le_bytes_mod_order(&hash_bytes)
 }
 
 /// Extract the inner field element from a pairing output.

@@ -1,9 +1,18 @@
-use ark_bls12_381::Fr;
+use ark_bls12_381::{Fr, G1Projective as G1};
 use ark_poly::{univariate::DensePolynomial, Polynomial};
 
-use crate::{common::{kzg::kzg_commit, polynomials::interpolate_polynomial, proof::{Proof, ProofJson}, utils::construct_Omega}, setup::SetupOutput};
+use crate::{
+    common::{
+        kzg::kzg_commit,
+        polynomials::interpolate_polynomial,
+        utils::construct_Omega,
+    },
+    setup::SetupOutput,
+};
 
-pub fn run(setup: &SetupOutput) -> Result<(Vec<Fr>, DensePolynomial<Fr>), Box<dyn std::error::Error>> {
+pub fn run(
+    setup: &SetupOutput,
+) -> (Vec<Fr>, DensePolynomial<Fr>, G1) {
     println!("Executing part 1...");
 
     let d = setup.d;
@@ -66,15 +75,5 @@ pub fn run(setup: &SetupOutput) -> Result<(Vec<Fr>, DensePolynomial<Fr>), Box<dy
     // Compute commitment of t
     let com_T = kzg_commit(&setup.gp, &T).unwrap();
 
-    let proof = Proof {
-        com_T,
-    };
-    
-    // Write Proof to a file
-    let proof_json = ProofJson::from(&proof);
-    let json_str = serde_json::to_string_pretty(&proof_json)?;
-    std::fs::write("data/proof.json", json_str)?;
-    println!("✅ Proof written to data/proof.json");
-
-    Ok((Omega, T))
+    (Omega, T, com_T)
 }

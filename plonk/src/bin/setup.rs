@@ -1,7 +1,7 @@
 use plonk::setup::{self, convert_to_json_friendly};
+use std::error::Error;
 use std::fs::{create_dir_all, File};
 use std::io::Write;
-use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("Running setup...");

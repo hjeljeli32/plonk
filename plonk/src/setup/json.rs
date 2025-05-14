@@ -1,8 +1,8 @@
-use serde::Serialize;
-use serde::Deserialize;
+use crate::setup::{GlobalParameters, SetupOutput};
 use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
 use ark_serialize::CanonicalDeserialize;
-use crate::setup::{SetupOutput, GlobalParameters};
+use serde::Deserialize;
+use serde::Serialize;
 
 #[derive(Serialize, Deserialize)]
 pub struct GlobalParametersJson {
@@ -21,10 +21,15 @@ pub struct SetupOutputJson {
 
 impl SetupOutputJson {
     pub fn into_setup_output(self) -> SetupOutput {
-        let tau_powers_g1 = self.gp.tau_powers_g1.iter().map(|hex_str| {
-            let bytes = hex::decode(hex_str).expect("Invalid hex in tau_powers_g1");
-            G1::deserialize_compressed(&*bytes).expect("Failed to deserialize G1")
-        }).collect();
+        let tau_powers_g1 = self
+            .gp
+            .tau_powers_g1
+            .iter()
+            .map(|hex_str| {
+                let bytes = hex::decode(hex_str).expect("Invalid hex in tau_powers_g1");
+                G1::deserialize_compressed(&*bytes).expect("Failed to deserialize G1")
+            })
+            .collect();
 
         let tau_g2_bytes = hex::decode(&self.gp.tau_g2).expect("Invalid hex in tau_g2");
         let tau_g2 = G2::deserialize_compressed(&*tau_g2_bytes).expect("Failed to deserialize G2");

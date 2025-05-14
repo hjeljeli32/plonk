@@ -6,15 +6,9 @@ use plonk::common::{
     kzg::{kzg_commit, kzg_setup},
     polynomials::{interpolate_polynomial, random_polynomial},
     protocols::{
-        compute_q_zero_test, compute_t_and_t1_prescribed_permutation_check,
-        compute_t_and_t1_product_check, compute_t_and_t1_product_check_rational_functions,
-        compute_t_and_t1_sum_check, prove_equality, prove_prescribed_permutation_check,
-        prove_product_check, prove_product_check_rational_functions, prove_sum_check,
-        prove_zero_test, verify_equality, verify_prescribed_permutation_check,
-        verify_product_check, verify_product_check_rational_functions, verify_sum_check,
-        verify_zero_test,
+        compute_q_zero_test, compute_q_zero_test_from_roots, compute_t_and_t1_prescribed_permutation_check, compute_t_and_t1_product_check, compute_t_and_t1_product_check_rational_functions, compute_t_and_t1_sum_check, prove_equality, prove_prescribed_permutation_check, prove_product_check, prove_product_check_rational_functions, prove_sum_check, prove_zero_test, verify_equality, verify_prescribed_permutation_check, verify_product_check, verify_product_check_rational_functions, verify_sum_check, verify_zero_on_roots_test, verify_zero_test
     },
-    utils::{construct_Omega, construct_vanishing_polynomial},
+    utils::{construct_Omega, construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots},
 };
 
 #[test]
@@ -140,8 +134,8 @@ fn test_zero_test_fail() {
     // check that f is of degree 10
     assert_eq!(f.degree(), 10, "f must be of degree 10");
 
-    // construct Z_Omega (vanishing polynomial) of subset Omega of size 8
-    let Z_Omega = construct_vanishing_polynomial(k); // -1 + x^8
+    // construct Z_Omega (vanishing polynomial) defined by its roots
+    let Z_Omega = construct_vanishing_polynomial(k);
 
     // Prover computes commitment of f
     let com_f = kzg_commit(&gp, &f).unwrap();
@@ -164,6 +158,96 @@ fn test_zero_test_fail() {
     // Verifier verifies Zero Test
     assert!(
         verify_zero_test(&gp, k, com_f, com_q, r, f_r, proof_f, q_r, proof_q) == false,
+        "Verify must return false because polynomial is not Zero on Omega"
+    );
+}
+
+#[test]
+fn test_zero_on_roots_test_success() {
+    let mut rng = ark_std::test_rng();
+    let degree = 10;
+
+    // generate global parameters
+    let Omega = vec![Fr::from(2), Fr::from(3)];
+    let gp = kzg_setup(degree);
+
+    // compute x_vals and y_vals and interpolate f
+    let mut x_vals = Omega.clone();
+    x_vals.extend((0..9).map(|_| Fr::rand(&mut rng)));
+    let mut y_vals: Vec<Fr> = (0..2).map(|_| Fr::ZERO).collect();
+    y_vals.extend((0..9).map(|_| Fr::rand(&mut rng)));
+    let f = interpolate_polynomial(&x_vals, &y_vals);
+
+    // check that f is of degree 10
+    assert_eq!(f.degree(), 10, "f must be of degree 10");
+
+    // construct Z_Omega (vanishing polynomial) defined by its roots
+    let Z_Omega = construct_vanishing_polynomial_from_roots(&Omega);
+
+    // Prover computes commitment of f
+    let com_f = kzg_commit(&gp, &f).unwrap();
+
+    // Prover computes quotient polynomial of f by Z_Omega
+    let q = compute_q_zero_test_from_roots(&Omega, &f);
+
+    // check that f is divisble by Z_Omega
+    assert_eq!(&q * &Z_Omega, f, "f must be divisible by Z_Omega");
+
+    // Prover computes commitment of q
+    let com_q = kzg_commit(&gp, &q).unwrap();
+
+    // Verifier generates randomly r
+    let r = Fr::rand(&mut rng);
+
+    // Prover proves Zero Test
+    let (f_r, proof_f, q_r, proof_q) = prove_zero_test(&gp, &f, &q, r);
+
+    // Verifier verifies Zero Test
+    assert!(
+        verify_zero_on_roots_test(&gp, &Omega, com_f, com_q, r, f_r, proof_f, q_r, proof_q),
+        "Verify must return true because polynomial is Zero on Omega"
+    );
+}
+
+#[test]
+fn test_zero_on_roots_test_fail() {
+    let mut rng = ark_std::test_rng();
+    let degree = 10;
+
+    // generate global parameters
+    let Omega = vec![Fr::from(2), Fr::from(3)];
+    let gp = kzg_setup(degree);
+
+    // generate f randomly so it won't be zero on Omega
+    let f = random_polynomial(&mut rng, 10);
+
+    // check that f is of degree 10
+    assert_eq!(f.degree(), 10, "f must be of degree 10");
+
+    // construct Z_Omega (vanishing polynomial) defined by its roots
+    let Z_Omega = construct_vanishing_polynomial_from_roots(&Omega);
+
+    // Prover computes commitment of f
+    let com_f = kzg_commit(&gp, &f).unwrap();
+
+    // Prover computes quotient polynomial of f by Z_Omega
+    let q = compute_q_zero_test_from_roots(&Omega, &f);
+
+    // check that f is not divisble by Z_Omega
+    assert_ne!(&q * &Z_Omega, f, "f must be not divisible by Z_Omega");
+
+    // Prover computes commitment of q
+    let com_q = kzg_commit(&gp, &q).unwrap();
+
+    // Verifier generates randomly r
+    let r = Fr::rand(&mut rng);
+
+    // Prover proves Zero Test
+    let (f_r, proof_f, q_r, proof_q) = prove_zero_test(&gp, &f, &q, r);
+
+    // Verifier verifies Zero Test
+    assert!(
+        verify_zero_on_roots_test(&gp, &Omega, com_f, com_q, r, f_r, proof_f, q_r, proof_q) == false,
         "Verify must return false because polynomial is not Zero on Omega"
     );
 }

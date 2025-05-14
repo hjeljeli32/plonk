@@ -1,7 +1,12 @@
-use ark_bls12_381::Fr;
-use ark_ff::{AdditiveGroup, Field};
+use ark_bls12_381::{Fr, G1Projective as G1};
+use ark_ec::PrimeGroup;
+use ark_ff::{AdditiveGroup, Field, PrimeField};
 use ark_poly::univariate::DensePolynomial;
-use plonk::common::utils::{construct_Omega, construct_vanishing_polynomial};
+use ark_serialize::CanonicalSerialize;
+use digest::Digest;
+use plonk::common::utils::{
+    construct_Omega, construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots, derive_challenge_from_commitment,
+};
 
 #[test]
 fn test_construct_Omega() {
@@ -29,4 +34,40 @@ fn test_construct_vanishing_polynomial() {
         },
         "Z_Omega must be be equal to X^k -1"
     );
+}
+
+#[test]
+fn test_construct_vanishing_polynomial_from_roots() {
+    // Z_Omega (vanishing polynomial) from roots 2, 3
+    let Z_Omega = construct_vanishing_polynomial_from_roots(&vec![Fr::from(2), Fr::from(3)]); // (x-2) * (x-3)
+
+    assert_eq!(
+        Z_Omega,
+        DensePolynomial {
+            coeffs: vec![Fr::from(6), Fr::from(-5), Fr::from(1)],
+        },
+        "Z_Omega must be be equal to (X-2)(X-3)"
+    );
+}
+
+#[test]
+fn test_derive_challenge_from_commitment() {
+    // Use generator as deterministic commitment
+    let commitment = G1::generator();
+
+    // Derive the challenge
+    let challenge: Fr = derive_challenge_from_commitment(&commitment);
+
+    // Re-derive expected value manually
+    let mut bytes = Vec::new();
+    commitment
+        .serialize_compressed(&mut bytes)
+        .expect("Serialization should not fail");
+    let hash = blake2::Blake2s256::digest(&bytes);
+    let mut hash_bytes = [0u8; 32];
+    hash_bytes.copy_from_slice(&hash[..32]);
+    let expected = Fr::from_le_bytes_mod_order(&hash_bytes);
+
+    // Now check
+    assert_eq!(challenge, expected, "Derived challenge doesn't match expected value");
 }
