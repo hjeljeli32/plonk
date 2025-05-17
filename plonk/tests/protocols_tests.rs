@@ -6,9 +6,18 @@ use plonk::common::{
     kzg::{kzg_commit, kzg_setup},
     polynomials::{interpolate_polynomial, random_polynomial},
     protocols::{
-        compute_q_zero_test, compute_q_zero_test_from_roots, compute_t_and_t1_prescribed_permutation_check, compute_t_and_t1_product_check, compute_t_and_t1_product_check_rational_functions, compute_t_and_t1_sum_check, prove_equality, prove_prescribed_permutation_check, prove_product_check, prove_product_check_rational_functions, prove_sum_check, prove_zero_test, verify_equality, verify_prescribed_permutation_check, verify_product_check, verify_product_check_rational_functions, verify_sum_check, verify_zero_on_roots_test, verify_zero_test
+        compute_q_zero_test, compute_q_zero_test_from_roots,
+        compute_t_and_t1_prescribed_permutation_check, compute_t_and_t1_product_check,
+        compute_t_and_t1_product_check_rational_functions, compute_t_and_t1_sum_check,
+        prove_equality, prove_prescribed_permutation_check, prove_product_check,
+        prove_product_check_rational_functions, prove_sum_check, prove_zero_test, verify_equality,
+        verify_prescribed_permutation_check, verify_product_check,
+        verify_product_check_rational_functions, verify_sum_check, verify_zero_on_roots_test,
+        verify_zero_test,
     },
-    utils::{construct_Omega, construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots},
+    utils::{
+        construct_Omega, construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots,
+    },
 };
 
 #[test]
@@ -247,7 +256,8 @@ fn test_zero_on_roots_test_fail() {
 
     // Verifier verifies Zero Test
     assert!(
-        verify_zero_on_roots_test(&gp, &Omega, com_f, com_q, r, f_r, proof_f, q_r, proof_q) == false,
+        verify_zero_on_roots_test(&gp, &Omega, com_f, com_q, r, f_r, proof_f, q_r, proof_q)
+            == false,
         "Verify must return false because polynomial is not Zero on Omega"
     );
 }

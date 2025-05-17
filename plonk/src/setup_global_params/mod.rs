@@ -1,12 +1,12 @@
 pub mod json;
 
 use crate::common::kzg::{kzg_setup, GlobalParameters};
-use crate::setup::json::{GlobalParametersJson, SetupOutputJson};
+use crate::setup_global_params::json::{GlobalParametersJson, SetupGlobalParamsOutputJson};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use std::time::Instant;
 
 #[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
-pub struct SetupOutput {
+pub struct SetupGlobalParamsOutput {
     pub number_gates: usize,
     pub number_public_inputs: usize,
     pub number_witnesses: usize,
@@ -14,7 +14,7 @@ pub struct SetupOutput {
     pub gp: GlobalParameters,
 }
 
-pub fn convert_to_json_friendly(output: &SetupOutput) -> SetupOutputJson {
+pub fn convert_to_json_friendly_global_params(output: &SetupGlobalParamsOutput) -> SetupGlobalParamsOutputJson {
     let tau_powers_g1 = output
         .gp
         .tau_powers_g1
@@ -33,7 +33,7 @@ pub fn convert_to_json_friendly(output: &SetupOutput) -> SetupOutputJson {
         .serialize_compressed(&mut g2_bytes)
         .unwrap();
 
-    SetupOutputJson {
+    SetupGlobalParamsOutputJson {
         number_gates: output.number_gates,
         number_public_inputs: output.number_public_inputs,
         number_witnesses: output.number_witnesses,
@@ -45,7 +45,7 @@ pub fn convert_to_json_friendly(output: &SetupOutput) -> SetupOutputJson {
     }
 }
 
-pub fn run() -> SetupOutput {
+pub fn run() -> SetupGlobalParamsOutput {
     println!("Executing setup...");
     let start = Instant::now();
 
@@ -60,7 +60,7 @@ pub fn run() -> SetupOutput {
 
     println!("✅ Setup took: {:?}", start.elapsed());
 
-    SetupOutput {
+    SetupGlobalParamsOutput {
         number_gates,
         number_public_inputs,
         number_witnesses,

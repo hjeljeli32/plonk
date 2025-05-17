@@ -3,13 +3,14 @@ pub mod part2;
 
 use std::time::Instant;
 
-use crate::setup::SetupOutput;
+use crate::setup_global_params::SetupGlobalParamsOutput;
 
-pub fn run(setup: &SetupOutput) -> () {
+pub fn run(setup: &SetupGlobalParamsOutput) -> () {
     let start = Instant::now();
 
     let (Omega, T, com_T) = part1::run(&setup);
     println!("✅ Part1 took: {:?}", start.elapsed());
+
     let start = Instant::now();
 
     let _ = part2::run(&setup, &Omega, &T, com_T).unwrap();

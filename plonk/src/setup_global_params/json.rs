@@ -1,4 +1,4 @@
-use crate::setup::{GlobalParameters, SetupOutput};
+use crate::setup_global_params::{GlobalParameters, SetupGlobalParamsOutput};
 use ark_bls12_381::{G1Projective as G1, G2Projective as G2};
 use ark_serialize::CanonicalDeserialize;
 use serde::Deserialize;
@@ -11,7 +11,7 @@ pub struct GlobalParametersJson {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct SetupOutputJson {
+pub struct SetupGlobalParamsOutputJson {
     pub number_gates: usize,
     pub number_public_inputs: usize,
     pub number_witnesses: usize,
@@ -19,8 +19,8 @@ pub struct SetupOutputJson {
     pub gp: GlobalParametersJson,
 }
 
-impl SetupOutputJson {
-    pub fn into_setup_output(self) -> SetupOutput {
+impl SetupGlobalParamsOutputJson {
+    pub fn into_setup_output(self) -> SetupGlobalParamsOutput {
         let tau_powers_g1 = self
             .gp
             .tau_powers_g1
@@ -34,7 +34,7 @@ impl SetupOutputJson {
         let tau_g2_bytes = hex::decode(&self.gp.tau_g2).expect("Invalid hex in tau_g2");
         let tau_g2 = G2::deserialize_compressed(&*tau_g2_bytes).expect("Failed to deserialize G2");
 
-        SetupOutput {
+        SetupGlobalParamsOutput {
             number_gates: self.number_gates,
             number_public_inputs: self.number_public_inputs,
             number_witnesses: self.number_witnesses,

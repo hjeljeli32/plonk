@@ -39,7 +39,10 @@ impl From<&Proof> for ProofJson {
         let com_q = hex::encode(&buf);
         buf.clear();
 
-        proof.proof_T_minus_v.serialize_compressed(&mut buf).unwrap();
+        proof
+            .proof_T_minus_v
+            .serialize_compressed(&mut buf)
+            .unwrap();
         let proof_T_minus_v = hex::encode(&buf);
         buf.clear();
 
@@ -62,15 +65,22 @@ impl From<&ProofJson> for Proof {
     fn from(json: &ProofJson) -> Self {
         let com_q_bytes = hex::decode(&json.com_q).expect("Invalid hex in com_q");
         let com_T_bytes = hex::decode(&json.com_T).expect("Invalid hex in com_T");
-        let proof_T_minus_v_bytes = hex::decode(&json.proof_T_minus_v).expect("Invalid hex in proof_T_minus_v");
+        let proof_T_minus_v_bytes =
+            hex::decode(&json.proof_T_minus_v).expect("Invalid hex in proof_T_minus_v");
         let proof_q_bytes = hex::decode(&json.proof_q).expect("Invalid hex in proof_q");
 
         let com_q = G1::deserialize_compressed(&*com_q_bytes).expect("Failed to deserialize com_q");
         let com_T = G1::deserialize_compressed(&*com_T_bytes).expect("Failed to deserialize com_T");
-        let proof_T_minus_v = G1::deserialize_compressed(&*proof_T_minus_v_bytes).expect("Failed to deserialize proof_T_minus_v");
-        let proof_q = G1::deserialize_compressed(&*proof_q_bytes).expect("Failed to deserialize proof_q");
+        let proof_T_minus_v = G1::deserialize_compressed(&*proof_T_minus_v_bytes)
+            .expect("Failed to deserialize proof_T_minus_v");
+        let proof_q =
+            G1::deserialize_compressed(&*proof_q_bytes).expect("Failed to deserialize proof_q");
 
-        let pub_inputs = json.pub_inputs.iter().map(|s| Fr::from_str(s).expect("Invalid Fr in pub_inputs")).collect();
+        let pub_inputs = json
+            .pub_inputs
+            .iter()
+            .map(|s| Fr::from_str(s).expect("Invalid Fr in pub_inputs"))
+            .collect();
         let T_minus_v_r = Fr::from_str(&json.T_minus_v_r).expect("Invalid T_minus_v_r");
         let q_r = Fr::from_str(&json.q_r).expect("Invalid q_r");
 

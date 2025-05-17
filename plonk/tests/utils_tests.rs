@@ -5,7 +5,8 @@ use ark_poly::univariate::DensePolynomial;
 use ark_serialize::CanonicalSerialize;
 use digest::Digest;
 use plonk::common::utils::{
-    construct_Omega, construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots, derive_challenge_from_commitment,
+    construct_Omega, construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots,
+    derive_challenge_from_commitment,
 };
 
 #[test]
@@ -69,5 +70,8 @@ fn test_derive_challenge_from_commitment() {
     let expected = Fr::from_le_bytes_mod_order(&hash_bytes);
 
     // Now check
-    assert_eq!(challenge, expected, "Derived challenge doesn't match expected value");
+    assert_eq!(
+        challenge, expected,
+        "Derived challenge doesn't match expected value"
+    );
 }

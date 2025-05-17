@@ -2,17 +2,11 @@ use ark_bls12_381::{Fr, G1Projective as G1};
 use ark_poly::{univariate::DensePolynomial, Polynomial};
 
 use crate::{
-    common::{
-        kzg::kzg_commit,
-        polynomials::interpolate_polynomial,
-        utils::construct_Omega,
-    },
-    setup::SetupOutput,
+    common::{kzg::kzg_commit, polynomials::interpolate_polynomial, utils::construct_Omega},
+    setup_global_params::SetupGlobalParamsOutput,
 };
 
-pub fn run(
-    setup: &SetupOutput,
-) -> (Vec<Fr>, DensePolynomial<Fr>, G1) {
+pub fn run(setup: &SetupGlobalParamsOutput) -> (Vec<Fr>, DensePolynomial<Fr>, G1) {
     println!("Executing part 1...");
 
     let d = setup.d;

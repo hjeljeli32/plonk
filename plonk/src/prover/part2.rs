@@ -3,13 +3,21 @@ use ark_poly::{univariate::DensePolynomial, Polynomial};
 
 use crate::{
     common::{
-        kzg::kzg_commit, polynomials::interpolate_polynomial, proof::{Proof, ProofJson}, protocols::{compute_q_zero_test_from_roots, prove_zero_test}, utils::derive_challenge_from_commitment
-
+        kzg::kzg_commit,
+        polynomials::interpolate_polynomial,
+        proof::{Proof, ProofJson},
+        protocols::{compute_q_zero_test_from_roots, prove_zero_test},
+        utils::derive_challenge_from_commitment,
     },
-    setup::SetupOutput,
+    setup_global_params::SetupGlobalParamsOutput,
 };
 
-pub fn run(setup: &SetupOutput, Omega: &Vec<Fr>, T: &DensePolynomial<Fr>, com_T: G1) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run(
+    setup: &SetupGlobalParamsOutput,
+    Omega: &Vec<Fr>,
+    T: &DensePolynomial<Fr>,
+    com_T: G1,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("Executing part 2...");
 
     let number_public_inputs = setup.number_public_inputs;
@@ -39,11 +47,7 @@ pub fn run(setup: &SetupOutput, Omega: &Vec<Fr>, T: &DensePolynomial<Fr>, com_T:
         "v must be of degree 1"
     );
     let T_minus_v = T - &v;
-    assert_eq!(
-        T_minus_v.degree(),
-        11,
-        "T_minus_v must be of degree 11"
-    );
+    assert_eq!(T_minus_v.degree(), 11, "T_minus_v must be of degree 11");
 
     // Compute commitment of v and derive commitment of T-v
     let com_v = kzg_commit(&setup.gp, &v).unwrap();
@@ -53,14 +57,22 @@ pub fn run(setup: &SetupOutput, Omega: &Vec<Fr>, T: &DensePolynomial<Fr>, com_T:
     let q = compute_q_zero_test_from_roots(&Omega_inputs, &T_minus_v);
     let com_q = kzg_commit(&setup.gp, &q).unwrap();
 
-    // Derive challenge r from the commitment of T-v 
+    // Derive challenge r from the commitment of T-v
     let r = derive_challenge_from_commitment(&com_T_minus_v);
 
     // Prove Zero Test of T-v on Omega_inputs
     let (T_minus_v_r, proof_T_minus_v, q_r, proof_q) =
         prove_zero_test(&setup.gp, &T_minus_v, &q, r);
 
-    let proof = Proof { pub_inputs, com_T, com_q, T_minus_v_r, proof_T_minus_v, q_r, proof_q };
+    let proof = Proof {
+        pub_inputs,
+        com_T,
+        com_q,
+        T_minus_v_r,
+        proof_T_minus_v,
+        q_r,
+        proof_q,
+    };
 
     // Write Proof to a file
     let proof_json = ProofJson::from(&proof);

@@ -1,5 +1,7 @@
 use plonk::{
-    common::proof::{Proof, ProofJson}, setup::json::SetupOutputJson, verifier
+    common::proof::{Proof, ProofJson},
+    setup_global_params::json::SetupGlobalParamsOutputJson,
+    verifier,
 };
 use std::{error::Error, fs::File, io::BufReader};
 
@@ -9,7 +11,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Open and read srs.json
     let file = File::open("data/srs.json")?;
     let reader = BufReader::new(file);
-    let setup_json: SetupOutputJson = serde_json::from_reader(reader)?;
+    let setup_json: SetupGlobalParamsOutputJson = serde_json::from_reader(reader)?;
     let setup = setup_json.into_setup_output();
     println!("✅ Loaded setup parameters from srs.json");
     println!("\t Number of gates: {}", setup.number_gates);
