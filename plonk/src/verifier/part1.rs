@@ -54,9 +54,9 @@ pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
             &setup.gp,
             &Omega_inputs,
             com_T_minus_v,
-            proof.com_q,
             r,
             &ZeroTestProof {
+                com_q: proof.proof_T_minus_v_zero.com_q,
                 f_r: proof.proof_T_minus_v_zero.f_r,
                 proof_f: proof.proof_T_minus_v_zero.proof_f,
                 q_r: proof.proof_T_minus_v_zero.q_r,

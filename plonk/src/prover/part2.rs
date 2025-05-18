@@ -55,7 +55,6 @@ pub fn run(
 
     // Compute quotient polynomial of T-v by the vanishing polynomial defined by Omega_inputs as roots
     let q = compute_q_zero_test_from_roots(&Omega_inputs, &T_minus_v);
-    let com_q = kzg_commit(&setup.gp, &q).unwrap();
 
     // Derive challenge r from the commitment of T-v
     let r = derive_challenge_from_commitment(&com_T_minus_v);
@@ -66,7 +65,6 @@ pub fn run(
     let proof = Proof {
         pub_inputs,
         com_T,
-        com_q,
         proof_T_minus_v_zero,
     };
 

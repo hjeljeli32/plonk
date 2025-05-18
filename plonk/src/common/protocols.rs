@@ -9,7 +9,7 @@ use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use crate::common::polynomials::{compose_polynomials, interpolate_polynomial};
 
 use super::{
-    kzg::{kzg_evaluate, kzg_verify, GlobalParameters},
+    kzg::{kzg_commit, kzg_evaluate, kzg_verify, GlobalParameters},
     utils::{construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots},
 };
 
@@ -25,6 +25,7 @@ pub struct EqualityProof {
 // Struct for zero test proof
 #[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct ZeroTestProof {
+    pub com_q: G1,
     pub f_r: Fr,
     pub proof_f: G1,
     pub q_r: Fr,
@@ -34,6 +35,8 @@ pub struct ZeroTestProof {
 // Struct for product check proof
 #[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct ProductCheckProof {
+    pub com_t: G1,
+    pub com_q: G1,
     pub t_w_k_minus_1: Fr,
     pub proof_t_w_k_minus_1: G1,
     pub t_r: Fr,
@@ -49,6 +52,8 @@ pub struct ProductCheckProof {
 // Struct for product check rational proof
 #[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct ProductCheckRationalProof {
+    pub com_t: G1,
+    pub com_q: G1,
     pub t_w_k_minus_1: Fr,
     pub proof_t_w_k_minus_1: G1,
     pub t_r: Fr,
@@ -66,6 +71,8 @@ pub struct ProductCheckRationalProof {
 // Struct for sum check proof
 #[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct SumCheckProof {
+    pub com_t: G1,
+    pub com_q: G1,
     pub t_w_k_minus_1: Fr,
     pub proof_t_w_k_minus_1: G1,
     pub t_r: Fr,
@@ -81,6 +88,8 @@ pub struct SumCheckProof {
 // Struct for prescribed permutation check proof
 #[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct PrescribedPermutationCheckProof {
+    pub com_t: G1,
+    pub com_q: G1,
     pub t_w_k_minus_1: Fr,
     pub proof_t_w_k_minus_1: G1,
     pub t_rp: Fr,
@@ -162,12 +171,15 @@ pub fn prove_zero_test(
     q: &DensePolynomial<Fr>,
     r: Fr,
 ) -> ZeroTestProof {
+    // compute commitment of q
+    let com_q = kzg_commit(&gp, &q).unwrap();
     // compute f(r) and its proof
     let (f_r, proof_f) = kzg_evaluate(gp, f, r);
     // compute q(r) and its proof
     let (q_r, proof_q) = kzg_evaluate(gp, q, r);
 
     ZeroTestProof {
+        com_q,
         f_r,
         proof_f,
         q_r,
@@ -180,12 +192,11 @@ pub fn verify_zero_test(
     gp: &GlobalParameters,
     k: usize,
     com_f: G1,
-    com_q: G1,
     r: Fr,
     proof: &ZeroTestProof,
 ) -> bool {
     (proof.f_r == proof.q_r * (r.pow([k as u64]) - Fr::ONE))
-        && kzg_verify(gp, com_q, r, proof.q_r, proof.proof_q)
+        && kzg_verify(gp, proof.com_q, r, proof.q_r, proof.proof_q)
         && kzg_verify(gp, com_f, r, proof.f_r, proof.proof_f)
 }
 
@@ -194,14 +205,13 @@ pub fn verify_zero_on_roots_test(
     gp: &GlobalParameters,
     roots: &Vec<Fr>,
     com_f: G1,
-    com_q: G1,
     r: Fr,
     proof: &ZeroTestProof,
 ) -> bool {
     let Z_Omega = construct_vanishing_polynomial_from_roots(roots);
 
     (proof.f_r == proof.q_r * Z_Omega.evaluate(&r))
-        && kzg_verify(gp, com_q, r, proof.q_r, proof.proof_q)
+        && kzg_verify(gp, proof.com_q, r, proof.q_r, proof.proof_q)
         && kzg_verify(gp, com_f, r, proof.f_r, proof.proof_f)
 }
 
@@ -258,6 +268,8 @@ pub fn prove_product_check(
     f: &DensePolynomial<Fr>,
     r: Fr,
 ) -> ProductCheckProof {
+    let com_t = kzg_commit(&gp, &t).unwrap();
+    let com_q = kzg_commit(&gp, &q).unwrap();
     let (t_w_k_minus_1, proof_t_w_k_minus_1) = kzg_evaluate(gp, t, w.pow([k as u64 - 1]));
     let (t_r, proof_t_r) = kzg_evaluate(gp, t, r);
     let (t_w_r, proof_t_w_r) = kzg_evaluate(gp, t, r * w);
@@ -265,6 +277,8 @@ pub fn prove_product_check(
     let (f_w_r, proof_f_w_r) = kzg_evaluate(gp, f, r * w);
 
     ProductCheckProof {
+        com_t,
+        com_q,
         t_w_k_minus_1,
         proof_t_w_k_minus_1,
         t_r,
@@ -284,8 +298,6 @@ pub fn verify_product_check(
     w: Fr,
     k: usize,
     com_f: G1,
-    com_q: G1,
-    com_t: G1,
     r: Fr,
     proof: &ProductCheckProof,
 ) -> bool {
@@ -293,14 +305,14 @@ pub fn verify_product_check(
         && (proof.t_w_r - proof.t_r * proof.f_w_r == proof.q_r * (r.pow([k as u64]) - Fr::ONE))
         && kzg_verify(
             gp,
-            com_t,
+            proof.com_t,
             w.pow([k as u64 - 1]),
             proof.t_w_k_minus_1,
             proof.proof_t_w_k_minus_1,
         )
-        && kzg_verify(gp, com_t, r, proof.t_r, proof.proof_t_r)
-        && kzg_verify(gp, com_t, r * w, proof.t_w_r, proof.proof_t_w_r)
-        && kzg_verify(gp, com_q, r, proof.q_r, proof.proof_q_r)
+        && kzg_verify(gp, proof.com_t, r, proof.t_r, proof.proof_t_r)
+        && kzg_verify(gp, proof.com_t, r * w, proof.t_w_r, proof.proof_t_w_r)
+        && kzg_verify(gp, proof.com_q, r, proof.q_r, proof.proof_q_r)
         && kzg_verify(gp, com_f, r * w, proof.f_w_r, proof.proof_f_w_r)
 }
 
@@ -367,6 +379,8 @@ pub fn prove_product_check_rational_functions(
     g: &DensePolynomial<Fr>,
     r: Fr,
 ) -> ProductCheckRationalProof {
+    let com_t = kzg_commit(&gp, &t).unwrap();
+    let com_q = kzg_commit(&gp, &q).unwrap();
     let (t_w_k_minus_1, proof_t_w_k_minus_1) = kzg_evaluate(gp, t, w.pow([k as u64 - 1]));
     let (t_r, proof_t_r) = kzg_evaluate(gp, t, r);
     let (t_w_r, proof_t_w_r) = kzg_evaluate(gp, t, r * w);
@@ -375,6 +389,8 @@ pub fn prove_product_check_rational_functions(
     let (g_w_r, proof_g_w_r) = kzg_evaluate(gp, g, r * w);
 
     ProductCheckRationalProof {
+        com_t,
+        com_q,
         t_w_k_minus_1,
         proof_t_w_k_minus_1,
         t_r,
@@ -397,8 +413,6 @@ pub fn verify_product_check_rational_functions(
     k: usize,
     com_f: G1,
     com_g: G1,
-    com_q: G1,
-    com_t: G1,
     r: Fr,
     proof: &ProductCheckRationalProof,
 ) -> bool {
@@ -407,14 +421,14 @@ pub fn verify_product_check_rational_functions(
             == proof.q_r * (r.pow([k as u64]) - Fr::ONE))
         && kzg_verify(
             gp,
-            com_t,
+            proof.com_t,
             w.pow([k as u64 - 1]),
             proof.t_w_k_minus_1,
             proof.proof_t_w_k_minus_1,
         )
-        && kzg_verify(gp, com_t, r, proof.t_r, proof.proof_t_r)
-        && kzg_verify(gp, com_t, r * w, proof.t_w_r, proof.proof_t_w_r)
-        && kzg_verify(gp, com_q, r, proof.q_r, proof.proof_q_r)
+        && kzg_verify(gp, proof.com_t, r, proof.t_r, proof.proof_t_r)
+        && kzg_verify(gp, proof.com_t, r * w, proof.t_w_r, proof.proof_t_w_r)
+        && kzg_verify(gp, proof.com_q, r, proof.q_r, proof.proof_q_r)
         && kzg_verify(gp, com_f, r * w, proof.f_w_r, proof.proof_f_w_r)
         && kzg_verify(gp, com_g, r * w, proof.g_w_r, proof.proof_g_w_r)
 }
@@ -472,6 +486,8 @@ pub fn prove_sum_check(
     f: &DensePolynomial<Fr>,
     r: Fr,
 ) -> SumCheckProof {
+    let com_t = kzg_commit(&gp, &t).unwrap();
+    let com_q = kzg_commit(&gp, &q).unwrap();
     // compute t(w^(k-1)) and its proof
     let (t_w_k_minus_1, proof_t_w_k_minus_1) = kzg_evaluate(gp, t, w.pow([k as u64 - 1]));
     // compute t(r) and its proof
@@ -484,6 +500,8 @@ pub fn prove_sum_check(
     let (f_w_r, proof_f_w_r) = kzg_evaluate(gp, f, r * w);
 
     SumCheckProof {
+        com_t,
+        com_q,
         t_w_k_minus_1,
         proof_t_w_k_minus_1,
         t_r,
@@ -503,8 +521,6 @@ pub fn verify_sum_check(
     w: Fr,
     k: usize,
     com_f: G1,
-    com_q: G1,
-    com_t: G1,
     r: Fr,
     proof: &SumCheckProof,
 ) -> bool {
@@ -512,14 +528,14 @@ pub fn verify_sum_check(
         && (proof.t_w_r - (proof.t_r + proof.f_w_r) == proof.q_r * (r.pow([k as u64]) - Fr::ONE))
         && kzg_verify(
             gp,
-            com_t,
+            proof.com_t,
             w.pow([k as u64 - 1]),
             proof.t_w_k_minus_1,
             proof.proof_t_w_k_minus_1,
         )
-        && kzg_verify(gp, com_t, r, proof.t_r, proof.proof_t_r)
-        && kzg_verify(gp, com_t, r * w, proof.t_w_r, proof.proof_t_w_r)
-        && kzg_verify(gp, com_q, r, proof.q_r, proof.proof_q_r)
+        && kzg_verify(gp, proof.com_t, r, proof.t_r, proof.proof_t_r)
+        && kzg_verify(gp, proof.com_t, r * w, proof.t_w_r, proof.proof_t_w_r)
+        && kzg_verify(gp, proof.com_q, r, proof.q_r, proof.proof_q_r)
         && kzg_verify(gp, com_f, r * w, proof.f_w_r, proof.proof_f_w_r)
 }
 
@@ -617,6 +633,8 @@ pub fn prove_prescribed_permutation_check(
     W: &DensePolynomial<Fr>,
     rp: Fr,
 ) -> PrescribedPermutationCheckProof {
+    let com_t = kzg_commit(&gp, &t).unwrap();
+    let com_q = kzg_commit(&gp, &q).unwrap();
     // compute t(w^(k-1)) and its proof
     let (t_w_k_minus_1, proof_t_w_k_minus_1) = kzg_evaluate(gp, t, w.pow([k as u64 - 1]));
     // compute t(rp) and its proof
@@ -633,6 +651,8 @@ pub fn prove_prescribed_permutation_check(
     let (W_w_rp, proof_W_w_rp) = kzg_evaluate(gp, W, rp * w);
 
     PrescribedPermutationCheckProof {
+        com_t,
+        com_q,
         t_w_k_minus_1,
         proof_t_w_k_minus_1,
         t_rp,
@@ -658,8 +678,6 @@ pub fn verify_prescribed_permutation_check(
     com_f: G1,
     com_g: G1,
     com_W: G1,
-    com_q: G1,
-    com_t: G1,
     r: Fr,
     s: Fr,
     rp: Fr,
@@ -671,14 +689,14 @@ pub fn verify_prescribed_permutation_check(
             == proof.q_rp * (rp.pow([k as u64]) - Fr::ONE))
         && kzg_verify(
             gp,
-            com_t,
+            proof.com_t,
             w.pow([k as u64 - 1]),
             proof.t_w_k_minus_1,
             proof.proof_t_w_k_minus_1,
         )
-        && kzg_verify(gp, com_t, rp, proof.t_rp, proof.proof_t_rp)
-        && kzg_verify(gp, com_t, rp * w, proof.t_w_rp, proof.proof_t_w_rp)
-        && kzg_verify(gp, com_q, rp, proof.q_rp, proof.proof_q_rp)
+        && kzg_verify(gp, proof.com_t, rp, proof.t_rp, proof.proof_t_rp)
+        && kzg_verify(gp, proof.com_t, rp * w, proof.t_w_rp, proof.proof_t_w_rp)
+        && kzg_verify(gp, proof.com_q, rp, proof.q_rp, proof.proof_q_rp)
         && kzg_verify(gp, com_f, rp * w, proof.f_w_rp, proof.proof_f_w_rp)
         && kzg_verify(gp, com_g, rp * w, proof.g_w_rp, proof.proof_g_w_rp)
         && kzg_verify(gp, com_W, rp * w, proof.W_w_rp, proof.proof_W_w_rp)

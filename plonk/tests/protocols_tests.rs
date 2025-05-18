@@ -112,9 +112,6 @@ fn test_zero_test_success() {
     // check that f is divisble by Z_Omega
     assert_eq!(&q * &Z_Omega, f, "f must be divisible by Z_Omega");
 
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -123,7 +120,7 @@ fn test_zero_test_success() {
 
     // Verifier verifies Zero Test
     assert!(
-        verify_zero_test(&gp, k, com_f, com_q, r, &proof),
+        verify_zero_test(&gp, k, com_f, r, &proof),
         "Verify must return true because polynomial is Zero on Omega"
     );
 }
@@ -155,9 +152,6 @@ fn test_zero_test_fail() {
     // check that f is not divisble by Z_Omega
     assert_ne!(&q * &Z_Omega, f, "f must be not divisible by Z_Omega");
 
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -166,7 +160,7 @@ fn test_zero_test_fail() {
 
     // Verifier verifies Zero Test
     assert!(
-        verify_zero_test(&gp, k, com_f, com_q, r, &proof) == false,
+        verify_zero_test(&gp, k, com_f, r, &proof) == false,
         "Verify must return false because polynomial is not Zero on Omega"
     );
 }
@@ -202,9 +196,6 @@ fn test_zero_on_roots_test_success() {
     // check that f is divisble by Z_Omega
     assert_eq!(&q * &Z_Omega, f, "f must be divisible by Z_Omega");
 
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -213,7 +204,7 @@ fn test_zero_on_roots_test_success() {
 
     // Verifier verifies Zero Test
     assert!(
-        verify_zero_on_roots_test(&gp, &Omega, com_f, com_q, r, &proof),
+        verify_zero_on_roots_test(&gp, &Omega, com_f, r, &proof),
         "Verify must return true because polynomial is Zero on Omega"
     );
 }
@@ -245,9 +236,6 @@ fn test_zero_on_roots_test_fail() {
     // check that f is not divisble by Z_Omega
     assert_ne!(&q * &Z_Omega, f, "f must be not divisible by Z_Omega");
 
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -256,7 +244,7 @@ fn test_zero_on_roots_test_fail() {
 
     // Verifier verifies Zero Test
     assert!(
-        verify_zero_on_roots_test(&gp, &Omega, com_f, com_q, r, &proof) == false,
+        verify_zero_on_roots_test(&gp, &Omega, com_f, r, &proof) == false,
         "Verify must return false because polynomial is not Zero on Omega"
     );
 }
@@ -316,12 +304,6 @@ fn test_product_check_success() {
     // check that t1 is divisble by Z_Omega
     assert_eq!(&q * &Z_Omega, t1, "t1 must be divisible by Z_Omega");
 
-    // Prover computes commitment of t
-    let com_t = kzg_commit(&gp, &t).unwrap();
-
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -330,7 +312,7 @@ fn test_product_check_success() {
 
     // Verifier verifies Product Check
     assert!(
-        verify_product_check(&gp, Omega[1], k, com_f, com_q, com_t, r, &proof,),
+        verify_product_check(&gp, Omega[1], k, com_f, r, &proof),
         "Verify must return true because polynomial's product over Omega is 1"
     );
 }
@@ -379,12 +361,6 @@ fn test_product_check_fail() {
     // check that t1 is not divisble by Z_Omega
     assert_ne!(&q * &Z_Omega, t1, "t1 must be not divisible by Z_Omega");
 
-    // Prover computes commitment of t
-    let com_t = kzg_commit(&gp, &t).unwrap();
-
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -393,7 +369,7 @@ fn test_product_check_fail() {
 
     // Verifier verifies Product Check
     assert!(
-        verify_product_check(&gp, Omega[1], k, com_f, com_q, com_t, r, &proof,) == false,
+        verify_product_check(&gp, Omega[1], k, com_f, r, &proof) == false,
         "Verify must return false because polynomial's product over Omega is not equal to 1"
     );
 }
@@ -453,12 +429,6 @@ fn test_sum_check_success() {
     // check that t1 is divisble by Z_Omega
     assert_eq!(&q * &Z_Omega, t1, "t1 must be divisible by Z_Omega");
 
-    // Prover computes commitment of t
-    let com_t = kzg_commit(&gp, &t).unwrap();
-
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -472,8 +442,6 @@ fn test_sum_check_success() {
             Omega[1],
             k,
             com_f,
-            com_q,
-            com_t,
             r,
             &proof,
         ),
@@ -525,12 +493,6 @@ fn test_sum_check_fail() {
     // check that t1 is not divisble by Z_Omega
     assert_ne!(&q * &Z_Omega, t1, "t1 must be not divisible by Z_Omega");
 
-    // Prover computes commitment of t
-    let com_t = kzg_commit(&gp, &t).unwrap();
-
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -544,8 +506,6 @@ fn test_sum_check_fail() {
             Omega[1],
             k,
             com_f,
-            com_q,
-            com_t,
             r,
             &proof,
         ) == false,
@@ -621,12 +581,6 @@ fn test_product_check_rational_functions_success() {
     // check that t1 is divisble by Z_Omega
     assert_eq!(&q * &Z_Omega, t1, "t1 must be divisible by Z_Omega");
 
-    // Prover computes commitment of t
-    let com_t = kzg_commit(&gp, &t).unwrap();
-
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -641,8 +595,6 @@ fn test_product_check_rational_functions_success() {
             k,
             com_f,
             com_g,
-            com_q,
-            com_t,
             r,
             &proof,
         ),
@@ -698,12 +650,6 @@ fn test_product_check_rational_functions_fail() {
     // check that t1 is not divisble by Z_Omega
     assert_ne!(&q * &Z_Omega, t1, "t1 must be not divisible by Z_Omega");
 
-    // Prover computes commitment of t
-    let com_t = kzg_commit(&gp, &t).unwrap();
-
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -718,8 +664,6 @@ fn test_product_check_rational_functions_fail() {
             k,
             com_f,
             com_g,
-            com_q,
-            com_t,
             r,
             &proof,
         ) == false,
@@ -784,12 +728,6 @@ fn test_permutation_check_success() {
     // check that t1 is divisble by Z_Omega
     assert_eq!(&q * &Z_Omega, t1, "t1 must be divisible by Z_Omega");
 
-    // Prover computes commitment of t
-    let com_t = kzg_commit(&gp, &t).unwrap();
-
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -804,8 +742,6 @@ fn test_permutation_check_success() {
             k,
             com_f,
             com_g,
-            com_q,
-            com_t,
             r,
             &proof,
         ),
@@ -861,12 +797,6 @@ fn test_permutation_check_fail() {
     // check that t1 is not divisble by Z_Omega
     assert_ne!(&q * &Z_Omega, t1, "t1 must be not divisible by Z_Omega");
 
-    // Prover computes commitment of t
-    let com_t = kzg_commit(&gp, &t).unwrap();
-
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let r = Fr::rand(&mut rng);
 
@@ -881,8 +811,6 @@ fn test_permutation_check_fail() {
             k,
             com_f,
             com_g,
-            com_q,
-            com_t,
             r,
             &proof,
         ) == false,
@@ -965,12 +893,6 @@ fn test_prescribed_permutation_check_success() {
     // check that t1 is divisble by Z_Omega
     assert_eq!(&q * &Z_Omega, t1, "t1 must be divisible by Z_Omega");
 
-    // Prover computes commitment of t
-    let com_t = kzg_commit(&gp, &t).unwrap();
-
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let rp = Fr::rand(&mut rng);
 
@@ -986,8 +908,6 @@ fn test_prescribed_permutation_check_success() {
             com_f,
             com_g,
             com_W,
-            com_q,
-            com_t,
             r,
             s,
             rp,
@@ -1059,12 +979,6 @@ fn test_prescribed_permutation_check_fail() {
     // check that t1 is not divisble by Z_Omega
     assert_ne!(&q * &Z_Omega, t1, "t1 must be not divisible by Z_Omega");
 
-    // Prover computes commitment of t
-    let com_t = kzg_commit(&gp, &t).unwrap();
-
-    // Prover computes commitment of q
-    let com_q = kzg_commit(&gp, &q).unwrap();
-
     // Verifier generates randomly r
     let rp = Fr::rand(&mut rng);
 
@@ -1080,8 +994,6 @@ fn test_prescribed_permutation_check_fail() {
             com_f,
             com_g,
             com_W,
-            com_q,
-            com_t,
             r,
             s,
             rp,
