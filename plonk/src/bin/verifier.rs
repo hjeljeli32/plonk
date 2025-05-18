@@ -14,15 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let setup_json: SetupGlobalParamsOutputJson = serde_json::from_reader(reader)?;
     let setup = setup_json.into_setup_output();
     println!("✅ Loaded setup parameters from srs.json");
-    println!("\t Number of gates: {}", setup.number_gates);
-    println!("\t Number of public inputs: {}", setup.number_public_inputs);
-    println!("\t Number of witnesses: {}", setup.number_witnesses);
-    println!("\t d: {}", setup.d);
-    println!(
-        "\t Length of tau_powers_g1: {}",
-        setup.gp.tau_powers_g1.len()
-    );
-
+ 
     // Open and read proof.json
     let json_str = std::fs::read_to_string("data/proof.json")?;
     let proof_json: ProofJson = serde_json::from_str(&json_str)?;

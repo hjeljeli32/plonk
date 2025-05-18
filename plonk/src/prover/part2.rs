@@ -61,16 +61,13 @@ pub fn run(
     let r = derive_challenge_from_commitment(&com_T_minus_v);
 
     // Prove Zero Test of T-v on Omega_inputs
-    let proof_zero = prove_zero_test(&setup.gp, &T_minus_v, &q, r);
+    let proof_T_minus_v_zero = prove_zero_test(&setup.gp, &T_minus_v, &q, r);
 
     let proof = Proof {
         pub_inputs,
         com_T,
         com_q,
-        T_minus_v_r: proof_zero.f_r,
-        proof_T_minus_v: proof_zero.proof_f,
-        q_r: proof_zero.q_r,
-        proof_q: proof_zero.proof_q,
+        proof_T_minus_v_zero,
     };
 
     // Write Proof to a file

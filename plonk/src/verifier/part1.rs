@@ -57,13 +57,13 @@ pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
             proof.com_q,
             r,
             &ZeroTestProof {
-                f_r: proof.T_minus_v_r,
-                proof_f: proof.proof_T_minus_v,
-                q_r: proof.q_r,
-                proof_q: proof.proof_q,
+                f_r: proof.proof_T_minus_v_zero.f_r,
+                proof_f: proof.proof_T_minus_v_zero.proof_f,
+                q_r: proof.proof_T_minus_v_zero.q_r,
+                proof_q: proof.proof_T_minus_v_zero.proof_q,
             }
         ),
-        "Verification of Zero Test must return true"
+        "Verification of Zero Test of T-v must return true"
     );
     println!("✅ Verified Zero Test of T-v on Omega_inputs");
 }

@@ -4,6 +4,7 @@ use ark_poly::{
     univariate::{DenseOrSparsePolynomial, DensePolynomial},
     Polynomial,
 };
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 
 use crate::common::polynomials::{compose_polynomials, interpolate_polynomial};
 
@@ -13,6 +14,7 @@ use super::{
 };
 
 // Struct for equality proof
+#[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct EqualityProof {
     pub y_f: Fr,
     pub proof_f: G1,
@@ -21,6 +23,7 @@ pub struct EqualityProof {
 }
 
 // Struct for zero test proof
+#[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct ZeroTestProof {
     pub f_r: Fr,
     pub proof_f: G1,
@@ -29,6 +32,7 @@ pub struct ZeroTestProof {
 }
 
 // Struct for product check proof
+#[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct ProductCheckProof {
     pub t_w_k_minus_1: Fr,
     pub proof_t_w_k_minus_1: G1,
@@ -43,6 +47,7 @@ pub struct ProductCheckProof {
 }
 
 // Struct for product check rational proof
+#[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct ProductCheckRationalProof {
     pub t_w_k_minus_1: Fr,
     pub proof_t_w_k_minus_1: G1,
@@ -59,6 +64,7 @@ pub struct ProductCheckRationalProof {
 }
 
 // Struct for sum check proof
+#[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct SumCheckProof {
     pub t_w_k_minus_1: Fr,
     pub proof_t_w_k_minus_1: G1,
@@ -73,6 +79,7 @@ pub struct SumCheckProof {
 }
 
 // Struct for prescribed permutation check proof
+#[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct PrescribedPermutationCheckProof {
     pub t_w_k_minus_1: Fr,
     pub proof_t_w_k_minus_1: G1,
