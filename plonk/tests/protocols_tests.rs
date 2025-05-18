@@ -40,11 +40,11 @@ fn test_equality_success() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves equality
-    let (y_f, proof_f, y_g, proof_g) = prove_equality(&gp, &f, &g, r);
+    let proof = prove_equality(&gp, &f, &g, r);
 
     // Verifier verifies equlity
     assert!(
-        verify_equality(&gp, com_f, com_g, r, y_f, proof_f, y_g, proof_g),
+        verify_equality(&gp, com_f, com_g, r, &proof),
         "Verify must return true because polynomials are equal"
     );
 }
@@ -69,11 +69,11 @@ fn test_equality_fail() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves equality
-    let (y_f, proof_f, y_g, proof_g) = prove_equality(&gp, &f, &g, r);
+    let proof = prove_equality(&gp, &f, &g, r);
 
     // Verifier verifies equality
     assert!(
-        verify_equality(&gp, com_f, com_g, r, y_f, proof_f, y_g, proof_g) == false,
+        verify_equality(&gp, com_f, com_g, r, &proof) == false,
         "Verify must return false because polynomials are not equal"
     );
 }
@@ -119,11 +119,11 @@ fn test_zero_test_success() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Zero Test
-    let (f_r, proof_f, q_r, proof_q) = prove_zero_test(&gp, &f, &q, r);
+    let proof = prove_zero_test(&gp, &f, &q, r);
 
     // Verifier verifies Zero Test
     assert!(
-        verify_zero_test(&gp, k, com_f, com_q, r, f_r, proof_f, q_r, proof_q),
+        verify_zero_test(&gp, k, com_f, com_q, r, &proof),
         "Verify must return true because polynomial is Zero on Omega"
     );
 }
@@ -162,11 +162,11 @@ fn test_zero_test_fail() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Zero Test
-    let (f_r, proof_f, q_r, proof_q) = prove_zero_test(&gp, &f, &q, r);
+    let proof = prove_zero_test(&gp, &f, &q, r);
 
     // Verifier verifies Zero Test
     assert!(
-        verify_zero_test(&gp, k, com_f, com_q, r, f_r, proof_f, q_r, proof_q) == false,
+        verify_zero_test(&gp, k, com_f, com_q, r, &proof) == false,
         "Verify must return false because polynomial is not Zero on Omega"
     );
 }
@@ -209,11 +209,11 @@ fn test_zero_on_roots_test_success() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Zero Test
-    let (f_r, proof_f, q_r, proof_q) = prove_zero_test(&gp, &f, &q, r);
+    let proof = prove_zero_test(&gp, &f, &q, r);
 
     // Verifier verifies Zero Test
     assert!(
-        verify_zero_on_roots_test(&gp, &Omega, com_f, com_q, r, f_r, proof_f, q_r, proof_q),
+        verify_zero_on_roots_test(&gp, &Omega, com_f, com_q, r, &proof),
         "Verify must return true because polynomial is Zero on Omega"
     );
 }
@@ -252,12 +252,11 @@ fn test_zero_on_roots_test_fail() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Zero Test
-    let (f_r, proof_f, q_r, proof_q) = prove_zero_test(&gp, &f, &q, r);
+    let proof = prove_zero_test(&gp, &f, &q, r);
 
     // Verifier verifies Zero Test
     assert!(
-        verify_zero_on_roots_test(&gp, &Omega, com_f, com_q, r, f_r, proof_f, q_r, proof_q)
-            == false,
+        verify_zero_on_roots_test(&gp, &Omega, com_f, com_q, r, &proof) == false,
         "Verify must return false because polynomial is not Zero on Omega"
     );
 }
@@ -327,40 +326,11 @@ fn test_product_check_success() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Product Check
-    let (
-        t_w_k_minus_1,
-        proof_t_w_k_minus_1,
-        t_r,
-        proof_t_r,
-        t_w_r,
-        proof_t_w_r,
-        q_r,
-        proof_q_r,
-        f_w_r,
-        proof_f_w_r,
-    ) = prove_product_check(&gp, Omega[1], k, &t, &q, &f, r);
+    let proof = prove_product_check(&gp, Omega[1], k, &t, &q, &f, r);
 
     // Verifier verifies Product Check
     assert!(
-        verify_product_check(
-            &gp,
-            Omega[1],
-            k,
-            com_f,
-            com_q,
-            com_t,
-            r,
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
-            t_r,
-            proof_t_r,
-            t_w_r,
-            proof_t_w_r,
-            q_r,
-            proof_q_r,
-            f_w_r,
-            proof_f_w_r,
-        ),
+        verify_product_check(&gp, Omega[1], k, com_f, com_q, com_t, r, &proof,),
         "Verify must return true because polynomial's product over Omega is 1"
     );
 }
@@ -419,40 +389,11 @@ fn test_product_check_fail() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Product Check
-    let (
-        t_w_k_minus_1,
-        proof_t_w_k_minus_1,
-        t_r,
-        proof_t_r,
-        t_w_r,
-        proof_t_w_r,
-        q_r,
-        proof_q_r,
-        f_w_r,
-        proof_f_w_r,
-    ) = prove_product_check(&gp, Omega[1], k, &t, &q, &f, r);
+    let proof = prove_product_check(&gp, Omega[1], k, &t, &q, &f, r);
 
     // Verifier verifies Product Check
     assert!(
-        verify_product_check(
-            &gp,
-            Omega[1],
-            k,
-            com_f,
-            com_q,
-            com_t,
-            r,
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
-            t_r,
-            proof_t_r,
-            t_w_r,
-            proof_t_w_r,
-            q_r,
-            proof_q_r,
-            f_w_r,
-            proof_f_w_r,
-        ) == false,
+        verify_product_check(&gp, Omega[1], k, com_f, com_q, com_t, r, &proof,) == false,
         "Verify must return false because polynomial's product over Omega is not equal to 1"
     );
 }
@@ -522,18 +463,7 @@ fn test_sum_check_success() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Sum Check
-    let (
-        t_w_k_minus_1,
-        proof_t_w_k_minus_1,
-        t_r,
-        proof_t_r,
-        t_w_r,
-        proof_t_w_r,
-        q_r,
-        proof_q_r,
-        f_w_r,
-        proof_f_w_r,
-    ) = prove_sum_check(&gp, Omega[1], k, &t, &q, &f, r);
+    let proof = prove_sum_check(&gp, Omega[1], k, &t, &q, &f, r);
 
     // Verifier verifies Sum Check
     assert!(
@@ -545,16 +475,7 @@ fn test_sum_check_success() {
             com_q,
             com_t,
             r,
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
-            t_r,
-            proof_t_r,
-            t_w_r,
-            proof_t_w_r,
-            q_r,
-            proof_q_r,
-            f_w_r,
-            proof_f_w_r,
+            &proof,
         ),
         "Verify must return true because polynomial's sum over Omega is 1"
     );
@@ -614,18 +535,7 @@ fn test_sum_check_fail() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Sum Check
-    let (
-        t_w_k_minus_1,
-        proof_t_w_k_minus_1,
-        t_r,
-        proof_t_r,
-        t_w_r,
-        proof_t_w_r,
-        q_r,
-        proof_q_r,
-        f_w_r,
-        proof_f_w_r,
-    ) = prove_sum_check(&gp, Omega[1], k, &t, &q, &f, r);
+    let proof = prove_sum_check(&gp, Omega[1], k, &t, &q, &f, r);
 
     // Verifier verifies Sum Check
     assert!(
@@ -637,16 +547,7 @@ fn test_sum_check_fail() {
             com_q,
             com_t,
             r,
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
-            t_r,
-            proof_t_r,
-            t_w_r,
-            proof_t_w_r,
-            q_r,
-            proof_q_r,
-            f_w_r,
-            proof_f_w_r,
+            &proof,
         ) == false,
         "Verify must return false because polynomial's sum over Omega is not equal to 1"
     );
@@ -730,20 +631,7 @@ fn test_product_check_rational_functions_success() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Product Check of rational functions
-    let (
-        t_w_k_minus_1,
-        proof_t_w_k_minus_1,
-        t_r,
-        proof_t_r,
-        t_w_r,
-        proof_t_w_r,
-        q_r,
-        proof_q_r,
-        f_w_r,
-        proof_f_w_r,
-        g_w_r,
-        proof_g_w_r,
-    ) = prove_product_check_rational_functions(&gp, Omega[1], k, &t, &q, &f, &g, r);
+    let proof = prove_product_check_rational_functions(&gp, Omega[1], k, &t, &q, &f, &g, r);
 
     // Verifier verifies Product Check of rational functions
     assert!(
@@ -756,18 +644,7 @@ fn test_product_check_rational_functions_success() {
             com_q,
             com_t,
             r,
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
-            t_r,
-            proof_t_r,
-            t_w_r,
-            proof_t_w_r,
-            q_r,
-            proof_q_r,
-            f_w_r,
-            proof_f_w_r,
-            g_w_r,
-            proof_g_w_r,
+            &proof,
         ),
         "Verify must return true because rational function's product over Omega is 1"
     );
@@ -831,20 +708,7 @@ fn test_product_check_rational_functions_fail() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Product Check of rational functions
-    let (
-        t_w_k_minus_1,
-        proof_t_w_k_minus_1,
-        t_r,
-        proof_t_r,
-        t_w_r,
-        proof_t_w_r,
-        q_r,
-        proof_q_r,
-        f_w_r,
-        proof_f_w_r,
-        g_w_r,
-        proof_g_w_r,
-    ) = prove_product_check_rational_functions(&gp, Omega[1], k, &t, &q, &f, &g, r);
+    let proof = prove_product_check_rational_functions(&gp, Omega[1], k, &t, &q, &f, &g, r);
 
     // Verifier verifies Product Check of rational functions
     assert!(
@@ -857,18 +721,7 @@ fn test_product_check_rational_functions_fail() {
             com_q,
             com_t,
             r,
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
-            t_r,
-            proof_t_r,
-            t_w_r,
-            proof_t_w_r,
-            q_r,
-            proof_q_r,
-            f_w_r,
-            proof_f_w_r,
-            g_w_r,
-            proof_g_w_r,
+            &proof,
         ) == false,
         "Verify must return false because rational function's product over Omega is not equal to 1"
     );
@@ -898,7 +751,7 @@ fn test_permutation_check_success() {
     g_y_vals.extend((0..3).map(|_| Fr::rand(&mut rng)));
     // interpolate f,g
     let f = interpolate_polynomial(&x_vals, &f_y_vals);
-    let g = interpolate_polynomial(&x_vals, &f_y_vals);
+    let g = interpolate_polynomial(&x_vals, &g_y_vals);
 
     assert_eq!(
         Omega
@@ -941,20 +794,7 @@ fn test_permutation_check_success() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Permutation Check
-    let (
-        t_w_k_minus_1,
-        proof_t_w_k_minus_1,
-        t_r,
-        proof_t_r,
-        t_w_r,
-        proof_t_w_r,
-        q_r,
-        proof_q_r,
-        f_w_r,
-        proof_f_w_r,
-        g_w_r,
-        proof_g_w_r,
-    ) = prove_product_check_rational_functions(&gp, Omega[1], k, &t, &q, &f, &g, r);
+    let proof = prove_product_check_rational_functions(&gp, Omega[1], k, &t, &q, &f, &g, r);
 
     // Verifier verifies Permutation Check
     assert!(
@@ -967,18 +807,7 @@ fn test_permutation_check_success() {
             com_q,
             com_t,
             r,
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
-            t_r,
-            proof_t_r,
-            t_w_r,
-            proof_t_w_r,
-            q_r,
-            proof_q_r,
-            f_w_r,
-            proof_f_w_r,
-            g_w_r,
-            proof_g_w_r,
+            &proof,
         ),
         "Verify must return true because g is permutation of f over Omega"
     );
@@ -1042,20 +871,7 @@ fn test_permutation_check_fail() {
     let r = Fr::rand(&mut rng);
 
     // Prover proves Permutation Check
-    let (
-        t_w_k_minus_1,
-        proof_t_w_k_minus_1,
-        t_r,
-        proof_t_r,
-        t_w_r,
-        proof_t_w_r,
-        q_r,
-        proof_q_r,
-        f_w_r,
-        proof_f_w_r,
-        g_w_r,
-        proof_g_w_r,
-    ) = prove_product_check_rational_functions(&gp, Omega[1], k, &t, &q, &f, &g, r);
+    let proof = prove_product_check_rational_functions(&gp, Omega[1], k, &t, &q, &f, &g, r);
 
     // Verifier verifies Permutation Check
     assert!(
@@ -1068,18 +884,7 @@ fn test_permutation_check_fail() {
             com_q,
             com_t,
             r,
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
-            t_r,
-            proof_t_r,
-            t_w_r,
-            proof_t_w_r,
-            q_r,
-            proof_q_r,
-            f_w_r,
-            proof_f_w_r,
-            g_w_r,
-            proof_g_w_r,
+            &proof,
         ) == false,
         "Verify must return false because g is not permutation of f over Omega"
     );
@@ -1170,22 +975,7 @@ fn test_prescribed_permutation_check_success() {
     let rp = Fr::rand(&mut rng);
 
     // Prover proves Prescribed Permutation Check
-    let (
-        t_w_k_minus_1,
-        proof_t_w_k_minus_1,
-        t_rp,
-        proof_t_rp,
-        t_w_rp,
-        proof_t_w_rp,
-        q_rp,
-        proof_q_rp,
-        f_w_rp,
-        proof_f_w_rp,
-        g_w_rp,
-        proof_g_w_rp,
-        W_w_rp,
-        proof_W_w_rp,
-    ) = prove_prescribed_permutation_check(&gp, Omega[1], k, &t, &q, &f, &g, &W, rp);
+    let proof = prove_prescribed_permutation_check(&gp, Omega[1], k, &t, &q, &f, &g, &W, rp);
 
     // Verifier verifies Prescribed Permutation Check
     assert!(
@@ -1201,20 +991,7 @@ fn test_prescribed_permutation_check_success() {
             r,
             s,
             rp,
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
-            t_rp,
-            proof_t_rp,
-            t_w_rp,
-            proof_t_w_rp,
-            q_rp,
-            proof_q_rp,
-            f_w_rp,
-            proof_f_w_rp,
-            g_w_rp,
-            proof_g_w_rp,
-            W_w_rp,
-            proof_W_w_rp,
+            &proof,
         ),
         "Verify must return true because g is prescribed permutation of f over Omega"
     );
@@ -1292,22 +1069,7 @@ fn test_prescribed_permutation_check_fail() {
     let rp = Fr::rand(&mut rng);
 
     // Prover proves Prescribed Permutation Check
-    let (
-        t_w_k_minus_1,
-        proof_t_w_k_minus_1,
-        t_rp,
-        proof_t_rp,
-        t_w_rp,
-        proof_t_w_rp,
-        q_rp,
-        proof_q_rp,
-        f_w_rp,
-        proof_f_w_rp,
-        g_w_rp,
-        proof_g_w_rp,
-        W_w_rp,
-        proof_W_w_rp,
-    ) = prove_prescribed_permutation_check(&gp, Omega[1], k, &t, &q, &f, &g, &W, rp);
+    let proof = prove_prescribed_permutation_check(&gp, Omega[1], k, &t, &q, &f, &g, &W, rp);
 
     // Verifier verifies Prescribed Permutation Check
     assert!(
@@ -1323,20 +1085,7 @@ fn test_prescribed_permutation_check_fail() {
             r,
             s,
             rp,
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
-            t_rp,
-            proof_t_rp,
-            t_w_rp,
-            proof_t_w_rp,
-            q_rp,
-            proof_q_rp,
-            f_w_rp,
-            proof_f_w_rp,
-            g_w_rp,
-            proof_g_w_rp,
-            W_w_rp,
-            proof_W_w_rp,
+            &proof,
         ) == false,
         "Verify must return false because g is not prescribed permutation of f over Omega"
     );

@@ -1,3 +1,4 @@
+use crate::common::protocols::ZeroTestProof;
 use crate::{common::proof::Proof, setup_global_params::SetupGlobalParamsOutput};
 
 use ark_poly::Polynomial;
@@ -55,10 +56,12 @@ pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
             com_T_minus_v,
             proof.com_q,
             r,
-            proof.T_minus_v_r,
-            proof.proof_T_minus_v,
-            proof.q_r,
-            proof.proof_q
+            &ZeroTestProof {
+                f_r: proof.T_minus_v_r,
+                proof_f: proof.proof_T_minus_v,
+                q_r: proof.q_r,
+                proof_q: proof.proof_q,
+            }
         ),
         "Verification of Zero Test must return true"
     );

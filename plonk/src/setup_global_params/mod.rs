@@ -14,7 +14,9 @@ pub struct SetupGlobalParamsOutput {
     pub gp: GlobalParameters,
 }
 
-pub fn convert_to_json_friendly_global_params(output: &SetupGlobalParamsOutput) -> SetupGlobalParamsOutputJson {
+pub fn convert_to_json_friendly_global_params(
+    output: &SetupGlobalParamsOutput,
+) -> SetupGlobalParamsOutputJson {
     let tau_powers_g1 = output
         .gp
         .tau_powers_g1

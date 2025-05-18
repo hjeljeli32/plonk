@@ -4,8 +4,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::str::FromStr;
 
-use ark_poly::univariate::DensePolynomial;
 use crate::setup_proving_key::SetupProvingKeyOutput;
+use ark_poly::univariate::DensePolynomial;
 
 #[derive(Serialize, Deserialize)]
 pub struct SetupProvingKeyOutputJson {
@@ -14,7 +14,9 @@ pub struct SetupProvingKeyOutputJson {
 
 impl SetupProvingKeyOutputJson {
     pub fn into_setup_output(self) -> SetupProvingKeyOutput {
-        let coeffs = self.S.iter()
+        let coeffs = self
+            .S
+            .iter()
             .map(|s| Fr::from_str(s).expect("Invalid Fr in selector S"))
             .collect();
         SetupProvingKeyOutput {

@@ -1,6 +1,6 @@
-use plonk::setup_proving_key::convert_to_json_friendly_proving_key;
 use plonk::setup_global_params::json::SetupGlobalParamsOutputJson;
 use plonk::setup_proving_key;
+use plonk::setup_proving_key::convert_to_json_friendly_proving_key;
 use std::error::Error;
 use std::fs::{create_dir_all, File};
 use std::io::{BufReader, Write};
@@ -25,6 +25,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         file.write_all(json_str.as_bytes())?;
     }
 
-    println!("✅ Proving Key written to data/proving_key.json");
+    println!("✅ Proving key written to data/proving_key.json");
     Ok(())
 }

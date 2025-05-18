@@ -12,19 +12,100 @@ use super::{
     utils::{construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots},
 };
 
+// Struct for equality proof
+pub struct EqualityProof {
+    pub y_f: Fr,
+    pub proof_f: G1,
+    pub y_g: Fr,
+    pub proof_g: G1,
+}
+
+// Struct for zero test proof
+pub struct ZeroTestProof {
+    pub f_r: Fr,
+    pub proof_f: G1,
+    pub q_r: Fr,
+    pub proof_q: G1,
+}
+
+// Struct for product check proof
+pub struct ProductCheckProof {
+    pub t_w_k_minus_1: Fr,
+    pub proof_t_w_k_minus_1: G1,
+    pub t_r: Fr,
+    pub proof_t_r: G1,
+    pub t_w_r: Fr,
+    pub proof_t_w_r: G1,
+    pub q_r: Fr,
+    pub proof_q_r: G1,
+    pub f_w_r: Fr,
+    pub proof_f_w_r: G1,
+}
+
+// Struct for product check rational proof
+pub struct ProductCheckRationalProof {
+    pub t_w_k_minus_1: Fr,
+    pub proof_t_w_k_minus_1: G1,
+    pub t_r: Fr,
+    pub proof_t_r: G1,
+    pub t_w_r: Fr,
+    pub proof_t_w_r: G1,
+    pub q_r: Fr,
+    pub proof_q_r: G1,
+    pub f_w_r: Fr,
+    pub proof_f_w_r: G1,
+    pub g_w_r: Fr,
+    pub proof_g_w_r: G1,
+}
+
+// Struct for sum check proof
+pub struct SumCheckProof {
+    pub t_w_k_minus_1: Fr,
+    pub proof_t_w_k_minus_1: G1,
+    pub t_r: Fr,
+    pub proof_t_r: G1,
+    pub t_w_r: Fr,
+    pub proof_t_w_r: G1,
+    pub q_r: Fr,
+    pub proof_q_r: G1,
+    pub f_w_r: Fr,
+    pub proof_f_w_r: G1,
+}
+
+// Struct for prescribed permutation check proof
+pub struct PrescribedPermutationCheckProof {
+    pub t_w_k_minus_1: Fr,
+    pub proof_t_w_k_minus_1: G1,
+    pub t_rp: Fr,
+    pub proof_t_rp: G1,
+    pub t_w_rp: Fr,
+    pub proof_t_w_rp: G1,
+    pub q_rp: Fr,
+    pub proof_q_rp: G1,
+    pub f_w_rp: Fr,
+    pub proof_f_w_rp: G1,
+    pub g_w_rp: Fr,
+    pub proof_g_w_rp: G1,
+    pub W_w_rp: Fr,
+    pub proof_W_w_rp: G1,
+}
+
 // Generates a proof that two previously committed polynomials f,g are equal
 pub fn prove_equality(
     gp: &GlobalParameters,
     f: &DensePolynomial<Fr>,
     g: &DensePolynomial<Fr>,
     r: Fr,
-) -> (Fr, G1, Fr, G1) {
-    // compute f(r) and its proof
+) -> EqualityProof {
     let (y_f, proof_f) = kzg_evaluate(gp, f, r);
-    // compute g(r) and its proof
     let (y_g, proof_g) = kzg_evaluate(gp, g, r);
 
-    (y_f, proof_f, y_g, proof_g)
+    EqualityProof {
+        y_f,
+        proof_f,
+        y_g,
+        proof_g,
+    }
 }
 
 // Verify the proof that two previously committed polynomials f,g are equal
@@ -33,12 +114,11 @@ pub fn verify_equality(
     com_f: G1,
     com_g: G1,
     r: Fr,
-    y_f: Fr,
-    proof_f: G1,
-    y_g: Fr,
-    proof_g: G1,
+    proof: &EqualityProof,
 ) -> bool {
-    (y_f == y_g) && kzg_verify(gp, com_f, r, y_f, proof_f) && kzg_verify(gp, com_g, r, y_g, proof_g)
+    (proof.y_f == proof.y_g)
+        && kzg_verify(gp, com_f, r, proof.y_f, proof.proof_f)
+        && kzg_verify(gp, com_g, r, proof.y_g, proof.proof_g)
 }
 
 // Computes the quotient polynomial q of f by the vanishing polynomial Z_Omega
@@ -74,13 +154,18 @@ pub fn prove_zero_test(
     f: &DensePolynomial<Fr>,
     q: &DensePolynomial<Fr>,
     r: Fr,
-) -> (Fr, G1, Fr, G1) {
+) -> ZeroTestProof {
     // compute f(r) and its proof
     let (f_r, proof_f) = kzg_evaluate(gp, f, r);
     // compute q(r) and its proof
     let (q_r, proof_q) = kzg_evaluate(gp, q, r);
 
-    (f_r, proof_f, q_r, proof_q)
+    ZeroTestProof {
+        f_r,
+        proof_f,
+        q_r,
+        proof_q,
+    }
 }
 
 // Verifies the proof that a polynomial (previously committed) is zero on subset Omega
@@ -90,14 +175,11 @@ pub fn verify_zero_test(
     com_f: G1,
     com_q: G1,
     r: Fr,
-    f_r: Fr,
-    proof_f: G1,
-    q_r: Fr,
-    proof_q: G1,
+    proof: &ZeroTestProof,
 ) -> bool {
-    (f_r == q_r * (r.pow([k as u64]) - Fr::ONE))
-        && kzg_verify(gp, com_q, r, q_r, proof_q)
-        && kzg_verify(gp, com_f, r, f_r, proof_f)
+    (proof.f_r == proof.q_r * (r.pow([k as u64]) - Fr::ONE))
+        && kzg_verify(gp, com_q, r, proof.q_r, proof.proof_q)
+        && kzg_verify(gp, com_f, r, proof.f_r, proof.proof_f)
 }
 
 // Verifies the proof that a polynomial (previously committed) is zero on given roots
@@ -107,16 +189,13 @@ pub fn verify_zero_on_roots_test(
     com_f: G1,
     com_q: G1,
     r: Fr,
-    f_r: Fr,
-    proof_f: G1,
-    q_r: Fr,
-    proof_q: G1,
+    proof: &ZeroTestProof,
 ) -> bool {
     let Z_Omega = construct_vanishing_polynomial_from_roots(roots);
 
-    (f_r == q_r * Z_Omega.evaluate(&r))
-        && kzg_verify(gp, com_q, r, q_r, proof_q)
-        && kzg_verify(gp, com_f, r, f_r, proof_f)
+    (proof.f_r == proof.q_r * Z_Omega.evaluate(&r))
+        && kzg_verify(gp, com_q, r, proof.q_r, proof.proof_q)
+        && kzg_verify(gp, com_f, r, proof.f_r, proof.proof_f)
 }
 
 // Constructs the polynomials t and t1 based on polynomial f and subset Omega for product check
@@ -171,19 +250,14 @@ pub fn prove_product_check(
     q: &DensePolynomial<Fr>,
     f: &DensePolynomial<Fr>,
     r: Fr,
-) -> (Fr, G1, Fr, G1, Fr, G1, Fr, G1, Fr, G1) {
-    // compute t(w^(k-1)) and its proof
+) -> ProductCheckProof {
     let (t_w_k_minus_1, proof_t_w_k_minus_1) = kzg_evaluate(gp, t, w.pow([k as u64 - 1]));
-    // compute t(r) and its proof
     let (t_r, proof_t_r) = kzg_evaluate(gp, t, r);
-    // compute t(w*r) and its proof
     let (t_w_r, proof_t_w_r) = kzg_evaluate(gp, t, r * w);
-    // compute q(r) and its proof
     let (q_r, proof_q_r) = kzg_evaluate(gp, q, r);
-    // compute f(w*r) and its proof
     let (f_w_r, proof_f_w_r) = kzg_evaluate(gp, f, r * w);
 
-    (
+    ProductCheckProof {
         t_w_k_minus_1,
         proof_t_w_k_minus_1,
         t_r,
@@ -194,7 +268,7 @@ pub fn prove_product_check(
         proof_q_r,
         f_w_r,
         proof_f_w_r,
-    )
+    }
 }
 
 // Verifies the proof of product check on subset Omega
@@ -206,30 +280,21 @@ pub fn verify_product_check(
     com_q: G1,
     com_t: G1,
     r: Fr,
-    t_w_k_minus_1: Fr,
-    proof_t_w_k_minus_1: G1,
-    t_r: Fr,
-    proof_t_r: G1,
-    t_w_r: Fr,
-    proof_t_w_r: G1,
-    q_r: Fr,
-    proof_q_r: G1,
-    f_w_r: Fr,
-    proof_f_w_r: G1,
+    proof: &ProductCheckProof,
 ) -> bool {
-    (t_w_k_minus_1 == Fr::ONE)
-        && (t_w_r - t_r * f_w_r == q_r * (r.pow([k as u64]) - Fr::ONE))
+    (proof.t_w_k_minus_1 == Fr::ONE)
+        && (proof.t_w_r - proof.t_r * proof.f_w_r == proof.q_r * (r.pow([k as u64]) - Fr::ONE))
         && kzg_verify(
             gp,
             com_t,
             w.pow([k as u64 - 1]),
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
+            proof.t_w_k_minus_1,
+            proof.proof_t_w_k_minus_1,
         )
-        && kzg_verify(gp, com_t, r, t_r, proof_t_r)
-        && kzg_verify(gp, com_t, r * w, t_w_r, proof_t_w_r)
-        && kzg_verify(gp, com_q, r, q_r, proof_q_r)
-        && kzg_verify(gp, com_f, r * w, f_w_r, proof_f_w_r)
+        && kzg_verify(gp, com_t, r, proof.t_r, proof.proof_t_r)
+        && kzg_verify(gp, com_t, r * w, proof.t_w_r, proof.proof_t_w_r)
+        && kzg_verify(gp, com_q, r, proof.q_r, proof.proof_q_r)
+        && kzg_verify(gp, com_f, r * w, proof.f_w_r, proof.proof_f_w_r)
 }
 
 // Constructs the polynomials t and t1 based on polynomials f,g and subset Omega for product check over rational functions
@@ -294,21 +359,15 @@ pub fn prove_product_check_rational_functions(
     f: &DensePolynomial<Fr>,
     g: &DensePolynomial<Fr>,
     r: Fr,
-) -> (Fr, G1, Fr, G1, Fr, G1, Fr, G1, Fr, G1, Fr, G1) {
-    // compute t(w^(k-1)) and its proof
+) -> ProductCheckRationalProof {
     let (t_w_k_minus_1, proof_t_w_k_minus_1) = kzg_evaluate(gp, t, w.pow([k as u64 - 1]));
-    // compute t(r) and its proof
     let (t_r, proof_t_r) = kzg_evaluate(gp, t, r);
-    // compute t(w*r) and its proof
     let (t_w_r, proof_t_w_r) = kzg_evaluate(gp, t, r * w);
-    // compute q(r) and its proof
     let (q_r, proof_q_r) = kzg_evaluate(gp, q, r);
-    // compute f(w*r) and its proof
     let (f_w_r, proof_f_w_r) = kzg_evaluate(gp, f, r * w);
-    // compute g(w*r) and its proof
     let (g_w_r, proof_g_w_r) = kzg_evaluate(gp, g, r * w);
 
-    (
+    ProductCheckRationalProof {
         t_w_k_minus_1,
         proof_t_w_k_minus_1,
         t_r,
@@ -321,7 +380,7 @@ pub fn prove_product_check_rational_functions(
         proof_f_w_r,
         g_w_r,
         proof_g_w_r,
-    )
+    }
 }
 
 // Verifies the proof of product check of rational functions on subset Omega
@@ -334,33 +393,23 @@ pub fn verify_product_check_rational_functions(
     com_q: G1,
     com_t: G1,
     r: Fr,
-    t_w_k_minus_1: Fr,
-    proof_t_w_k_minus_1: G1,
-    t_r: Fr,
-    proof_t_r: G1,
-    t_w_r: Fr,
-    proof_t_w_r: G1,
-    q_r: Fr,
-    proof_q_r: G1,
-    f_w_r: Fr,
-    proof_f_w_r: G1,
-    g_w_r: Fr,
-    proof_g_w_r: G1,
+    proof: &ProductCheckRationalProof,
 ) -> bool {
-    (t_w_k_minus_1 == Fr::ONE)
-        && (t_w_r * g_w_r - t_r * f_w_r == q_r * (r.pow([k as u64]) - Fr::ONE))
+    (proof.t_w_k_minus_1 == Fr::ONE)
+        && (proof.t_w_r * proof.g_w_r - proof.t_r * proof.f_w_r
+            == proof.q_r * (r.pow([k as u64]) - Fr::ONE))
         && kzg_verify(
             gp,
             com_t,
             w.pow([k as u64 - 1]),
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
+            proof.t_w_k_minus_1,
+            proof.proof_t_w_k_minus_1,
         )
-        && kzg_verify(gp, com_t, r, t_r, proof_t_r)
-        && kzg_verify(gp, com_t, r * w, t_w_r, proof_t_w_r)
-        && kzg_verify(gp, com_q, r, q_r, proof_q_r)
-        && kzg_verify(gp, com_f, r * w, f_w_r, proof_f_w_r)
-        && kzg_verify(gp, com_g, r * w, g_w_r, proof_g_w_r)
+        && kzg_verify(gp, com_t, r, proof.t_r, proof.proof_t_r)
+        && kzg_verify(gp, com_t, r * w, proof.t_w_r, proof.proof_t_w_r)
+        && kzg_verify(gp, com_q, r, proof.q_r, proof.proof_q_r)
+        && kzg_verify(gp, com_f, r * w, proof.f_w_r, proof.proof_f_w_r)
+        && kzg_verify(gp, com_g, r * w, proof.g_w_r, proof.proof_g_w_r)
 }
 
 // Constructs the polynomials t and t1 based on polynomial f and subset Omega for sum check
@@ -415,7 +464,7 @@ pub fn prove_sum_check(
     q: &DensePolynomial<Fr>,
     f: &DensePolynomial<Fr>,
     r: Fr,
-) -> (Fr, G1, Fr, G1, Fr, G1, Fr, G1, Fr, G1) {
+) -> SumCheckProof {
     // compute t(w^(k-1)) and its proof
     let (t_w_k_minus_1, proof_t_w_k_minus_1) = kzg_evaluate(gp, t, w.pow([k as u64 - 1]));
     // compute t(r) and its proof
@@ -427,7 +476,7 @@ pub fn prove_sum_check(
     // compute f(w*r) and its proof
     let (f_w_r, proof_f_w_r) = kzg_evaluate(gp, f, r * w);
 
-    (
+    SumCheckProof {
         t_w_k_minus_1,
         proof_t_w_k_minus_1,
         t_r,
@@ -438,7 +487,7 @@ pub fn prove_sum_check(
         proof_q_r,
         f_w_r,
         proof_f_w_r,
-    )
+    }
 }
 
 // Verifies the proof of sum check on subset Omega
@@ -450,30 +499,21 @@ pub fn verify_sum_check(
     com_q: G1,
     com_t: G1,
     r: Fr,
-    t_w_k_minus_1: Fr,
-    proof_t_w_k_minus_1: G1,
-    t_r: Fr,
-    proof_t_r: G1,
-    t_w_r: Fr,
-    proof_t_w_r: G1,
-    q_r: Fr,
-    proof_q_r: G1,
-    f_w_r: Fr,
-    proof_f_w_r: G1,
+    proof: &SumCheckProof,
 ) -> bool {
-    (t_w_k_minus_1 == Fr::ZERO)
-        && (t_w_r - (t_r + f_w_r) == q_r * (r.pow([k as u64]) - Fr::ONE))
+    (proof.t_w_k_minus_1 == Fr::ZERO)
+        && (proof.t_w_r - (proof.t_r + proof.f_w_r) == proof.q_r * (r.pow([k as u64]) - Fr::ONE))
         && kzg_verify(
             gp,
             com_t,
             w.pow([k as u64 - 1]),
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
+            proof.t_w_k_minus_1,
+            proof.proof_t_w_k_minus_1,
         )
-        && kzg_verify(gp, com_t, r, t_r, proof_t_r)
-        && kzg_verify(gp, com_t, r * w, t_w_r, proof_t_w_r)
-        && kzg_verify(gp, com_q, r, q_r, proof_q_r)
-        && kzg_verify(gp, com_f, r * w, f_w_r, proof_f_w_r)
+        && kzg_verify(gp, com_t, r, proof.t_r, proof.proof_t_r)
+        && kzg_verify(gp, com_t, r * w, proof.t_w_r, proof.proof_t_w_r)
+        && kzg_verify(gp, com_q, r, proof.q_r, proof.proof_q_r)
+        && kzg_verify(gp, com_f, r * w, proof.f_w_r, proof.proof_f_w_r)
 }
 
 // Constructs the polynomials t and t1 based on polynomials f,g and subset Omega for prescribed permutation check
@@ -569,7 +609,7 @@ pub fn prove_prescribed_permutation_check(
     g: &DensePolynomial<Fr>,
     W: &DensePolynomial<Fr>,
     rp: Fr,
-) -> (Fr, G1, Fr, G1, Fr, G1, Fr, G1, Fr, G1, Fr, G1, Fr, G1) {
+) -> PrescribedPermutationCheckProof {
     // compute t(w^(k-1)) and its proof
     let (t_w_k_minus_1, proof_t_w_k_minus_1) = kzg_evaluate(gp, t, w.pow([k as u64 - 1]));
     // compute t(rp) and its proof
@@ -585,7 +625,7 @@ pub fn prove_prescribed_permutation_check(
     // compute W(w*rp) and its proof
     let (W_w_rp, proof_W_w_rp) = kzg_evaluate(gp, W, rp * w);
 
-    (
+    PrescribedPermutationCheckProof {
         t_w_k_minus_1,
         proof_t_w_k_minus_1,
         t_rp,
@@ -600,7 +640,7 @@ pub fn prove_prescribed_permutation_check(
         proof_g_w_rp,
         W_w_rp,
         proof_W_w_rp,
-    )
+    }
 }
 
 // Verifies the proof of prescribed permutation check on subset Omega
@@ -616,35 +656,23 @@ pub fn verify_prescribed_permutation_check(
     r: Fr,
     s: Fr,
     rp: Fr,
-    t_w_k_minus_1: Fr,
-    proof_t_w_k_minus_1: G1,
-    t_rp: Fr,
-    proof_t_rp: G1,
-    t_w_rp: Fr,
-    proof_t_w_rp: G1,
-    q_rp: Fr,
-    proof_q_rp: G1,
-    f_w_rp: Fr,
-    proof_f_w_rp: G1,
-    g_w_rp: Fr,
-    proof_g_w_rp: G1,
-    W_w_rp: Fr,
-    proof_W_w_rp: G1,
+    proof: &PrescribedPermutationCheckProof,
 ) -> bool {
-    (t_w_k_minus_1 == Fr::ONE)
-        && (t_w_rp * (r - s * w * rp - g_w_rp) - t_rp * (r - s * W_w_rp - f_w_rp)
-            == q_rp * (rp.pow([k as u64]) - Fr::ONE))
+    (proof.t_w_k_minus_1 == Fr::ONE)
+        && (proof.t_w_rp * (r - s * w * rp - proof.g_w_rp)
+            - proof.t_rp * (r - s * proof.W_w_rp - proof.f_w_rp)
+            == proof.q_rp * (rp.pow([k as u64]) - Fr::ONE))
         && kzg_verify(
             gp,
             com_t,
             w.pow([k as u64 - 1]),
-            t_w_k_minus_1,
-            proof_t_w_k_minus_1,
+            proof.t_w_k_minus_1,
+            proof.proof_t_w_k_minus_1,
         )
-        && kzg_verify(gp, com_t, rp, t_rp, proof_t_rp)
-        && kzg_verify(gp, com_t, rp * w, t_w_rp, proof_t_w_rp)
-        && kzg_verify(gp, com_q, rp, q_rp, proof_q_rp)
-        && kzg_verify(gp, com_f, rp * w, f_w_rp, proof_f_w_rp)
-        && kzg_verify(gp, com_g, rp * w, g_w_rp, proof_g_w_rp)
-        && kzg_verify(gp, com_W, rp * w, W_w_rp, proof_W_w_rp)
+        && kzg_verify(gp, com_t, rp, proof.t_rp, proof.proof_t_rp)
+        && kzg_verify(gp, com_t, rp * w, proof.t_w_rp, proof.proof_t_w_rp)
+        && kzg_verify(gp, com_q, rp, proof.q_rp, proof.proof_q_rp)
+        && kzg_verify(gp, com_f, rp * w, proof.f_w_rp, proof.proof_f_w_rp)
+        && kzg_verify(gp, com_g, rp * w, proof.g_w_rp, proof.proof_g_w_rp)
+        && kzg_verify(gp, com_W, rp * w, proof.W_w_rp, proof.proof_W_w_rp)
 }

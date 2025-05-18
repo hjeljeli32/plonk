@@ -2,8 +2,10 @@ pub mod json;
 
 use std::time::Instant;
 
-use crate::{common::polynomials::interpolate_polynomial, setup_global_params::SetupGlobalParamsOutput};
 use crate::common::utils::construct_Omega;
+use crate::{
+    common::polynomials::interpolate_polynomial, setup_global_params::SetupGlobalParamsOutput,
+};
 
 use ark_bls12_381::Fr;
 use ark_ff::{AdditiveGroup, Field};
@@ -17,7 +19,9 @@ pub struct SetupProvingKeyOutput {
     pub S: DensePolynomial<Fr>,
 }
 
-pub fn convert_to_json_friendly_proving_key(output: &SetupProvingKeyOutput) -> SetupProvingKeyOutputJson {
+pub fn convert_to_json_friendly_proving_key(
+    output: &SetupProvingKeyOutput,
+) -> SetupProvingKeyOutputJson {
     SetupProvingKeyOutputJson {
         S: output.S.coeffs.iter().map(|c| c.to_string()).collect(),
     }
@@ -35,7 +39,11 @@ pub fn run(setup: &SetupGlobalParamsOutput) -> SetupProvingKeyOutput {
     // Define Omega_gates
     let mut Omega_gates = vec![];
     (0..number_gates).for_each(|l| Omega_gates.push(Omega[3 * l]));
-    assert_eq!(Omega_gates.len(), number_gates, "Omega_gates must be of length number_gates");
+    assert_eq!(
+        Omega_gates.len(),
+        number_gates,
+        "Omega_gates must be of length number_gates"
+    );
 
     let mut gates = vec![];
 
@@ -47,13 +55,15 @@ pub fn run(setup: &SetupGlobalParamsOutput) -> SetupProvingKeyOutput {
     // T(w^6) = 0 -- multiplication gate
     gates.push(Fr::ZERO);
 
-    // Interpolate the polynomial S 
+    // Interpolate the polynomial S
     let S = interpolate_polynomial(&Omega_gates, &gates);
-    assert_eq!(S.degree(), number_gates - 1, "S must be of degree 2");
+    assert_eq!(
+        S.degree(),
+        number_gates - 1,
+        "S must be of degree (number_gates - 1)"
+    );
 
     println!("✅ Generating proving key took: {:?}", start.elapsed());
 
-    SetupProvingKeyOutput {
-        S
-    }
+    SetupProvingKeyOutput { S }
 }
