@@ -61,20 +61,23 @@ pub fn construct_vanishing_polynomial_from_roots(roots: &Vec<Fr>) -> DensePolyno
     vanishing_polynomial
 }
 
-/// Derive a field element from a commitment using Blake2s256
-pub fn derive_challenge_from_commitment(commitment: &G1) -> Fr {
-    let mut bytes = Vec::new();
-    commitment
-        .serialize_compressed(&mut bytes)
-        .expect("serialization should not fail");
+/// Derive a field element from a vector of commitments using Blake2s256
+pub fn derive_challenge_from_commitments(commitments: &[G1]) -> Fr {
+    let mut hasher = Blake2s256::new();
 
-    // Hash to 32 bytes
-    let hash = Blake2s256::digest(&bytes);
+    for commitment in commitments {
+        let mut bytes = Vec::new();
+        commitment
+            .serialize_compressed(&mut bytes)
+            .expect("serialization should not fail");
+        hasher.update(&bytes);
+    }
 
-    // Interpret as big-endian integer mod Fr::MODULUS
+    let hash = hasher.finalize();
+
+    // Convert first 32 bytes of hash to a field element
     let mut hash_bytes = [0u8; 32];
-    hash_bytes.copy_from_slice(&hash[0..32]);
-
+    hash_bytes.copy_from_slice(&hash[..32]);
     Fr::from_le_bytes_mod_order(&hash_bytes)
 }
 

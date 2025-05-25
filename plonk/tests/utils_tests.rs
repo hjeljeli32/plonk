@@ -6,7 +6,7 @@ use ark_serialize::CanonicalSerialize;
 use digest::Digest;
 use plonk::common::utils::{
     construct_Omega, construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots,
-    derive_challenge_from_commitment,
+    derive_challenge_from_commitments,
 };
 
 #[test]
@@ -52,12 +52,12 @@ fn test_construct_vanishing_polynomial_from_roots() {
 }
 
 #[test]
-fn test_derive_challenge_from_commitment() {
+fn test_derive_challenge_from_single_commitment() {
     // Use generator as deterministic commitment
     let commitment = G1::generator();
 
     // Derive the challenge
-    let challenge: Fr = derive_challenge_from_commitment(&commitment);
+    let challenge: Fr = derive_challenge_from_commitments(&[commitment]);
 
     // Re-derive expected value manually
     let mut bytes = Vec::new();
@@ -73,5 +73,27 @@ fn test_derive_challenge_from_commitment() {
     assert_eq!(
         challenge, expected,
         "Derived challenge doesn't match expected value"
+    );
+}
+
+#[test]
+fn test_derive_challenge_from_two_commitments() {
+    let commitment1 = G1::generator();
+    let commitment2 = G1::generator().double(); // Distinct second commitment
+
+    let challenge: Fr = derive_challenge_from_commitments(&[commitment1, commitment2]);
+
+    // Derive expected value manually
+    let mut bytes = Vec::new();
+    commitment1.serialize_compressed(&mut bytes).unwrap();
+    commitment2.serialize_compressed(&mut bytes).unwrap();
+    let hash = blake2::Blake2s256::digest(&bytes);
+    let mut hash_bytes = [0u8; 32];
+    hash_bytes.copy_from_slice(&hash[..32]);
+    let expected = Fr::from_le_bytes_mod_order(&hash_bytes);
+
+    assert_eq!(
+        challenge, expected,
+        "Derived challenge from two commitments doesn't match expected value"
     );
 }

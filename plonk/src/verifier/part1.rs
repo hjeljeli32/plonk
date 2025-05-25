@@ -1,4 +1,3 @@
-use crate::common::protocols::ZeroTestProof;
 use crate::{common::proof::Proof, setup_global_params::SetupGlobalParamsOutput};
 
 use ark_poly::Polynomial;
@@ -7,7 +6,7 @@ use crate::common::{
     kzg::kzg_commit,
     polynomials::interpolate_polynomial,
     protocols::verify_zero_on_roots_test,
-    utils::{construct_Omega, derive_challenge_from_commitment},
+    utils::{construct_Omega, derive_challenge_from_commitments},
 };
 
 pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
@@ -46,7 +45,7 @@ pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
     let com_T_minus_v = proof.com_T - com_v;
 
     // Derive challenge r from the commitment of T-v
-    let r = derive_challenge_from_commitment(&com_T_minus_v);
+    let r = derive_challenge_from_commitments(&[com_T_minus_v]);
 
     // Verify Zero Test of T-v on Omega_inputs
     assert!(
@@ -55,13 +54,7 @@ pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
             &Omega_inputs,
             com_T_minus_v,
             r,
-            &ZeroTestProof {
-                com_q: proof.proof_T_minus_v_zero.com_q,
-                f_r: proof.proof_T_minus_v_zero.f_r,
-                proof_f: proof.proof_T_minus_v_zero.proof_f,
-                q_r: proof.proof_T_minus_v_zero.q_r,
-                proof_q: proof.proof_T_minus_v_zero.proof_q,
-            }
+            &proof.proof_T_minus_v_zero,
         ),
         "Verification of Zero Test of T-v must return true"
     );

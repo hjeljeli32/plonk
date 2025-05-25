@@ -27,9 +27,9 @@ pub struct EqualityProof {
 pub struct ZeroTestProof {
     pub com_q: G1,
     pub f_r: Fr,
-    pub proof_f: G1,
+    pub proof_f_r: G1,
     pub q_r: Fr,
-    pub proof_q: G1,
+    pub proof_q_r: G1,
 }
 
 // Struct for product check proof
@@ -104,6 +104,22 @@ pub struct PrescribedPermutationCheckProof {
     pub proof_g_w_rp: G1,
     pub W_w_rp: Fr,
     pub proof_W_w_rp: G1,
+}
+
+// Struct for T_S zero test
+#[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
+pub struct TSZeroTestProof {
+    pub com_q: G1,
+    pub T_r: Fr,
+    pub proof_T_r: G1,
+    pub T_w_r: Fr,
+    pub proof_T_w_r: G1,
+    pub T_w2_r: Fr,
+    pub proof_T_w2_r: G1,
+    pub S_r: Fr,
+    pub proof_S_r: G1,
+    pub q_r: Fr,
+    pub proof_q_r: G1,
 }
 
 // Generates a proof that two previously committed polynomials f,g are equal
@@ -181,9 +197,9 @@ pub fn prove_zero_test(
     ZeroTestProof {
         com_q,
         f_r,
-        proof_f,
+        proof_f_r: proof_f,
         q_r,
-        proof_q,
+        proof_q_r: proof_q,
     }
 }
 
@@ -196,8 +212,8 @@ pub fn verify_zero_test(
     proof: &ZeroTestProof,
 ) -> bool {
     (proof.f_r == proof.q_r * (r.pow([k as u64]) - Fr::ONE))
-        && kzg_verify(gp, proof.com_q, r, proof.q_r, proof.proof_q)
-        && kzg_verify(gp, com_f, r, proof.f_r, proof.proof_f)
+        && kzg_verify(gp, proof.com_q, r, proof.q_r, proof.proof_q_r)
+        && kzg_verify(gp, com_f, r, proof.f_r, proof.proof_f_r)
 }
 
 // Verifies the proof that a polynomial (previously committed) is zero on given roots
@@ -211,8 +227,8 @@ pub fn verify_zero_on_roots_test(
     let Z_Omega = construct_vanishing_polynomial_from_roots(roots);
 
     (proof.f_r == proof.q_r * Z_Omega.evaluate(&r))
-        && kzg_verify(gp, proof.com_q, r, proof.q_r, proof.proof_q)
-        && kzg_verify(gp, com_f, r, proof.f_r, proof.proof_f)
+        && kzg_verify(gp, proof.com_q, r, proof.q_r, proof.proof_q_r)
+        && kzg_verify(gp, com_f, r, proof.f_r, proof.proof_f_r)
 }
 
 // Constructs the polynomials t and t1 based on polynomial f and subset Omega for product check
@@ -700,4 +716,94 @@ pub fn verify_prescribed_permutation_check(
         && kzg_verify(gp, com_f, rp * w, proof.f_w_rp, proof.proof_f_w_rp)
         && kzg_verify(gp, com_g, rp * w, proof.g_w_rp, proof.proof_g_w_rp)
         && kzg_verify(gp, com_W, rp * w, proof.W_w_rp, proof.proof_W_w_rp)
+}
+
+// Constructs the polynomial t1 based on polynomials T and S for T_S zero test
+pub fn compute_t1_T_S_zero_test(
+    w: Fr,
+    T: &DensePolynomial<Fr>,
+    S: &DensePolynomial<Fr>,
+) -> DensePolynomial<Fr> {
+    // T(w*y)
+    let T_w_y = compose_polynomials(
+        T,
+        &DensePolynomial {
+            coeffs: vec![Fr::ZERO, w],
+        },
+    );
+    // T(w^2*y)
+    let T_w2_y = compose_polynomials(
+        T,
+        &DensePolynomial {
+            coeffs: vec![Fr::ZERO, w * w],
+        },
+    );
+    // 1 - S(y)
+    let one_minus_S_y = compose_polynomials(
+        &DensePolynomial {
+            coeffs: vec![Fr::ONE, -Fr::ONE],
+        },
+        S,
+    );
+    // t1(y) = S(y)(T(y) + T(w*y)) + (1 - S(y))T(y)T(w*y) - T(w^2*y)
+    S * (T + &T_w_y) + &one_minus_S_y * T * T_w_y - &T_w2_y
+}
+
+// Generates the proof of T_S Zero Test on subset Omega_gates
+pub fn prove_T_S_zero_test(
+    gp: &GlobalParameters,
+    w: Fr,
+    q: &DensePolynomial<Fr>,
+    T: &DensePolynomial<Fr>,
+    S: &DensePolynomial<Fr>,
+    r: Fr,
+) -> TSZeroTestProof {
+    let com_q = kzg_commit(&gp, &q).unwrap();
+    // compute T(r) and its proof
+    let (T_r, proof_T_r) = kzg_evaluate(gp, T, r);
+    // compute T(w*r) and its proof
+    let (T_w_r, proof_T_w_r) = kzg_evaluate(gp, T, w * r);
+    // compute T(w^2*r) and its proof
+    let (T_w2_r, proof_T_w2_r) = kzg_evaluate(gp, T, w * w * r);
+    // compute S(r) and its proof
+    let (S_r, proof_S_r) = kzg_evaluate(gp, S, r);
+    // compute q(r) and its proof
+    let (q_r, proof_q_r) = kzg_evaluate(gp, q, r);
+
+    TSZeroTestProof {
+        com_q,
+        T_r,
+        proof_T_r,
+        T_w_r,
+        proof_T_w_r,
+        T_w2_r,
+        proof_T_w2_r,
+        S_r,
+        proof_S_r,
+        q_r,
+        proof_q_r,
+    }
+}
+
+// Verifies the proof of T_S zero test on subset Omega_gates
+pub fn verify_T_S_zero_test(
+    gp: &GlobalParameters,
+    w: Fr,
+    Omega_gates: &Vec<Fr>,
+    com_T: G1,
+    com_S: G1,
+    r: Fr,
+    proof: &TSZeroTestProof,
+) -> bool {
+    // construct Z_Omega_gates (vanishing polynomial) of subset Omega_gates
+    let Z_Omega_gates = construct_vanishing_polynomial_from_roots(&Omega_gates);
+
+    proof.S_r * (proof.T_r + proof.T_w_r) + (Fr::ONE - proof.S_r) * proof.T_r * proof.T_w_r
+        - proof.T_w2_r
+        == proof.q_r * Z_Omega_gates.evaluate(&r)
+        && kzg_verify(gp, com_T, r, proof.T_r, proof.proof_T_r)
+        && kzg_verify(gp, com_T, w * r, proof.T_w_r, proof.proof_T_w_r)
+        && kzg_verify(gp, com_T, w * w * r, proof.T_w2_r, proof.proof_T_w2_r)
+        && kzg_verify(gp, com_S, r, proof.S_r, proof.proof_S_r)
+        && kzg_verify(gp, proof.com_q, r, proof.q_r, proof.proof_q_r)
 }

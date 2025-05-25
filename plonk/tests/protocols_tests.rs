@@ -6,11 +6,12 @@ use plonk::common::{
     kzg::{kzg_commit, kzg_setup},
     polynomials::{interpolate_polynomial, random_polynomial},
     protocols::{
-        compute_q_zero_test, compute_q_zero_test_from_roots,
+        compute_q_zero_test, compute_q_zero_test_from_roots, compute_t1_T_S_zero_test,
         compute_t_and_t1_prescribed_permutation_check, compute_t_and_t1_product_check,
         compute_t_and_t1_product_check_rational_functions, compute_t_and_t1_sum_check,
-        prove_equality, prove_prescribed_permutation_check, prove_product_check,
-        prove_product_check_rational_functions, prove_sum_check, prove_zero_test, verify_equality,
+        prove_T_S_zero_test, prove_equality, prove_prescribed_permutation_check,
+        prove_product_check, prove_product_check_rational_functions, prove_sum_check,
+        prove_zero_test, verify_T_S_zero_test, verify_equality,
         verify_prescribed_permutation_check, verify_product_check,
         verify_product_check_rational_functions, verify_sum_check, verify_zero_on_roots_test,
         verify_zero_test,
@@ -437,14 +438,7 @@ fn test_sum_check_success() {
 
     // Verifier verifies Sum Check
     assert!(
-        verify_sum_check(
-            &gp,
-            Omega[1],
-            k,
-            com_f,
-            r,
-            &proof,
-        ),
+        verify_sum_check(&gp, Omega[1], k, com_f, r, &proof,),
         "Verify must return true because polynomial's sum over Omega is 1"
     );
 }
@@ -501,14 +495,7 @@ fn test_sum_check_fail() {
 
     // Verifier verifies Sum Check
     assert!(
-        verify_sum_check(
-            &gp,
-            Omega[1],
-            k,
-            com_f,
-            r,
-            &proof,
-        ) == false,
+        verify_sum_check(&gp, Omega[1], k, com_f, r, &proof,) == false,
         "Verify must return false because polynomial's sum over Omega is not equal to 1"
     );
 }
@@ -589,15 +576,7 @@ fn test_product_check_rational_functions_success() {
 
     // Verifier verifies Product Check of rational functions
     assert!(
-        verify_product_check_rational_functions(
-            &gp,
-            Omega[1],
-            k,
-            com_f,
-            com_g,
-            r,
-            &proof,
-        ),
+        verify_product_check_rational_functions(&gp, Omega[1], k, com_f, com_g, r, &proof,),
         "Verify must return true because rational function's product over Omega is 1"
     );
 }
@@ -658,15 +637,8 @@ fn test_product_check_rational_functions_fail() {
 
     // Verifier verifies Product Check of rational functions
     assert!(
-        verify_product_check_rational_functions(
-            &gp,
-            Omega[1],
-            k,
-            com_f,
-            com_g,
-            r,
-            &proof,
-        ) == false,
+        verify_product_check_rational_functions(&gp, Omega[1], k, com_f, com_g, r, &proof,)
+            == false,
         "Verify must return false because rational function's product over Omega is not equal to 1"
     );
 }
@@ -736,15 +708,7 @@ fn test_permutation_check_success() {
 
     // Verifier verifies Permutation Check
     assert!(
-        verify_product_check_rational_functions(
-            &gp,
-            Omega[1],
-            k,
-            com_f,
-            com_g,
-            r,
-            &proof,
-        ),
+        verify_product_check_rational_functions(&gp, Omega[1], k, com_f, com_g, r, &proof,),
         "Verify must return true because g is permutation of f over Omega"
     );
 }
@@ -805,15 +769,8 @@ fn test_permutation_check_fail() {
 
     // Verifier verifies Permutation Check
     assert!(
-        verify_product_check_rational_functions(
-            &gp,
-            Omega[1],
-            k,
-            com_f,
-            com_g,
-            r,
-            &proof,
-        ) == false,
+        verify_product_check_rational_functions(&gp, Omega[1], k, com_f, com_g, r, &proof,)
+            == false,
         "Verify must return false because g is not permutation of f over Omega"
     );
 }
@@ -902,16 +859,7 @@ fn test_prescribed_permutation_check_success() {
     // Verifier verifies Prescribed Permutation Check
     assert!(
         verify_prescribed_permutation_check(
-            &gp,
-            Omega[1],
-            k,
-            com_f,
-            com_g,
-            com_W,
-            r,
-            s,
-            rp,
-            &proof,
+            &gp, Omega[1], k, com_f, com_g, com_W, r, s, rp, &proof,
         ),
         "Verify must return true because g is prescribed permutation of f over Omega"
     );
@@ -988,17 +936,214 @@ fn test_prescribed_permutation_check_fail() {
     // Verifier verifies Prescribed Permutation Check
     assert!(
         verify_prescribed_permutation_check(
-            &gp,
-            Omega[1],
-            k,
-            com_f,
-            com_g,
-            com_W,
-            r,
-            s,
-            rp,
-            &proof,
+            &gp, Omega[1], k, com_f, com_g, com_W, r, s, rp, &proof,
         ) == false,
         "Verify must return false because g is not prescribed permutation of f over Omega"
+    );
+}
+
+#[test]
+fn test_T_S_zero_test_success() {
+    let mut rng = ark_std::test_rng();
+
+    // this degree is used for kzg setup. We need to commit to polynomial q of degree 21.
+    let degree = 21;
+    let d = 12;
+    let number_gates = 3;
+
+    // generate global parameters
+    let gp = kzg_setup(degree);
+
+    // Define Omega as subgroup of size d
+    let Omega = construct_Omega(d);
+    assert_eq!(Omega.len(), d, "Omega must be of length d");
+
+    let (mut x_vals, mut y_vals) = (vec![], vec![]);
+
+    // T encodes all inputs: T(w^-j) = input#j
+    // T(w^-1) = 5
+    x_vals.push(Omega[d - 1]);
+    y_vals.push(Fr::from(5));
+    // T(w^-2) = 6
+    x_vals.push(Omega[d - 2]);
+    y_vals.push(Fr::from(6));
+    // T(w^-3) = 1
+    x_vals.push(Omega[d - 3]);
+    y_vals.push(Fr::from(1));
+
+    // T encodes all wires of the gates
+    // Gate 0 (Addition)
+    // T(w^0) = 5
+    x_vals.push(Omega[0]);
+    y_vals.push(Fr::from(5));
+    // T(w^1) = 6
+    x_vals.push(Omega[1]);
+    y_vals.push(Fr::from(6));
+    // T(w^2) = 11
+    x_vals.push(Omega[2]);
+    y_vals.push(Fr::from(11));
+
+    // Gate 1 (Addition)
+    // T(w^3) = 6
+    x_vals.push(Omega[3]);
+    y_vals.push(Fr::from(6));
+    // T(w^4) = 1
+    x_vals.push(Omega[4]);
+    y_vals.push(Fr::from(1));
+    // T(w^5) = 7
+    x_vals.push(Omega[5]);
+    y_vals.push(Fr::from(7));
+
+    // Gate 2 (Multiplication)
+    // T(w^6) = 11
+    x_vals.push(Omega[6]);
+    y_vals.push(Fr::from(11));
+    // T(w^7) = 7
+    x_vals.push(Omega[7]);
+    y_vals.push(Fr::from(7));
+    // T(w^8) = 77
+    x_vals.push(Omega[8]);
+    y_vals.push(Fr::from(77));
+
+    // Interpolate the polynomial T that enodes the entire trace
+    let T = interpolate_polynomial(&x_vals, &y_vals);
+    assert_eq!(T.degree(), d - 1, "T must be of degree d-1");
+
+    // Define Omega_gates
+    let mut Omega_gates = vec![];
+    (0..number_gates).for_each(|l| Omega_gates.push(Omega[3 * l]));
+
+    let mut gates = vec![];
+
+    // S encodes gates: S(w^3*l) = gate#l
+    // S(w^0) = 1 -- addition gate
+    gates.push(Fr::ONE);
+    // S(w^3) = 1 -- addition gate
+    gates.push(Fr::ONE);
+    // T(w^6) = 0 -- multiplication gate
+    gates.push(Fr::ZERO);
+
+    // Interpolate the polynomial S
+    let S = interpolate_polynomial(&Omega_gates, &gates);
+    assert_eq!(
+        S.degree(),
+        number_gates - 1,
+        "S must be of degree (number_gates - 1)"
+    );
+
+    let t1 = compute_t1_T_S_zero_test(Omega[1], &T, &S);
+
+    // check that t1 is of degree 24
+    assert_eq!(t1.degree(), 24, "t1 must be of degree 24");
+
+    for y in &Omega_gates {
+        assert_eq!(
+            t1.evaluate(&y),
+            Fr::ZERO,
+            "t1 should be zero on Omega_gates"
+        );
+    }
+
+    // construct Z_Omega_gates (vanishing polynomial) of subset Omega_gates
+    let Z_Omega_gates = construct_vanishing_polynomial_from_roots(&Omega_gates);
+
+    // Prover computes commitments of T,S
+    let com_T = kzg_commit(&gp, &T).unwrap();
+    let com_S = kzg_commit(&gp, &S).unwrap();
+
+    // Prover computes quotient polynomial of t1 by Z_Omega
+    let q = compute_q_zero_test_from_roots(&Omega_gates, &t1);
+
+    // check that q is of degree 21
+    assert_eq!(q.degree(), 21, "q must be of degree 21");
+
+    // check that t1 is divisble by Z_Omega_gates
+    assert_eq!(
+        &q * &Z_Omega_gates,
+        t1,
+        "t1 must be divisible by Z_Omega_gates"
+    );
+
+    // Verifier generates randomly r
+    let r = Fr::rand(&mut rng);
+
+    // Prover proves T_S zero test
+    let proof = prove_T_S_zero_test(&gp, Omega[1], &q, &T, &S, r);
+
+    // Verifier verifies T_S zero test
+    assert!(
+        verify_T_S_zero_test(&gp, Omega[1], &Omega_gates, com_T, com_S, r, &proof),
+        "Verify must return true because T and S satisfy T_S zero test on Omega_gates"
+    );
+}
+
+#[test]
+fn test_T_S_zero_test_fail() {
+    let mut rng = ark_std::test_rng();
+
+    // this degree is used for kzg setup. We need to commit to polynomial q of degree 21.
+    let degree = 21;
+    let d = 12;
+    let number_gates = 3;
+
+    // generate global parameters
+    let gp = kzg_setup(degree);
+
+    // Define Omega as subgroup of size d
+    let Omega = construct_Omega(d);
+    assert_eq!(Omega.len(), d, "Omega must be of length d");
+
+    // generate T,S randomly
+    let T = random_polynomial(&mut rng, 11);
+    let S = random_polynomial(&mut rng, 2);
+
+    // Define Omega_gates
+    let mut Omega_gates = vec![];
+    (0..number_gates).for_each(|l| Omega_gates.push(Omega[3 * l]));
+
+    let t1 = compute_t1_T_S_zero_test(Omega[1], &T, &S);
+
+    // check that t1 is of degree 24
+    assert_eq!(t1.degree(), 24, "t1 must be of degree 24");
+
+    for y in &Omega_gates {
+        assert_ne!(
+            t1.evaluate(&y),
+            Fr::ZERO,
+            "t1 should be not zero on Omega_gates"
+        );
+    }
+
+    // construct Z_Omega_gates (vanishing polynomial) of subset Omega_gates
+    let Z_Omega_gates = construct_vanishing_polynomial_from_roots(&Omega_gates);
+
+    // Prover computes commitments of T,S
+    let com_T = kzg_commit(&gp, &T).unwrap();
+    let com_S = kzg_commit(&gp, &S).unwrap();
+
+    // Prover computes quotient polynomial of t1 by Z_Omega
+    let q = compute_q_zero_test_from_roots(&Omega_gates, &t1);
+
+    // check that q is of degree 21
+    assert_eq!(q.degree(), 21, "q must be of degree 21");
+
+    // check that t1 is divisble by Z_Omega_gates
+    assert_ne!(
+        &q * &Z_Omega_gates,
+        t1,
+        "t1 must be not divisible by Z_Omega_gates"
+    );
+
+    // Verifier generates randomly r
+    let r = Fr::rand(&mut rng);
+
+    // Prover proves T_S zero test
+    let proof = prove_T_S_zero_test(&gp, Omega[1], &q, &T, &S, r);
+
+    // Verifier verifies T_S zero test
+    assert_eq!(
+        verify_T_S_zero_test(&gp, Omega[1], &Omega_gates, com_T, com_S, r, &proof),
+        false,
+        "Verify must return false because T and S do not satisfy T_S zero test on Omega_gates"
     );
 }

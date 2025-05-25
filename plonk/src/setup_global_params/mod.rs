@@ -57,8 +57,8 @@ pub fn run() -> SetupGlobalParamsOutput {
     let d = 3 * number_gates + number_public_inputs + number_witnesses;
     assert_eq!(d, 12, "d must be equal to 12");
 
-    // generate global parameters
-    let gp = kzg_setup(d);
+    // generate global parameters, the largest polynmial to be committed is of degree 21
+    let gp = kzg_setup(21);
 
     println!("✅ Setup took: {:?}", start.elapsed());
 
