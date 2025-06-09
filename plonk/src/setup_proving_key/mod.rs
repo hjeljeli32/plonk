@@ -17,6 +17,7 @@ use json::SetupProvingKeyOutputJson;
 #[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct SetupProvingKeyOutput {
     pub S: DensePolynomial<Fr>,
+    pub W: DensePolynomial<Fr>,
 }
 
 pub fn convert_to_json_friendly_proving_key(
@@ -24,6 +25,7 @@ pub fn convert_to_json_friendly_proving_key(
 ) -> SetupProvingKeyOutputJson {
     SetupProvingKeyOutputJson {
         S: output.S.coeffs.iter().map(|c| c.to_string()).collect(),
+        W: output.W.coeffs.iter().map(|c| c.to_string()).collect(),
     }
 }
 
@@ -36,6 +38,7 @@ pub fn run(setup: &SetupGlobalParamsOutput) -> SetupProvingKeyOutput {
     // Define Omega as subgroup of size d
     let Omega = construct_Omega(d);
     assert_eq!(Omega.len(), d, "Omega must be of length d");
+
     // Define Omega_gates
     let mut Omega_gates = vec![];
     (0..number_gates).for_each(|l| Omega_gates.push(Omega[3 * l]));
@@ -63,7 +66,38 @@ pub fn run(setup: &SetupGlobalParamsOutput) -> SetupProvingKeyOutput {
         "S must be of degree (number_gates - 1)"
     );
 
+    // W encodes wirings
+    let (mut W_x_vals, mut W_y_vals) = (vec![], vec![]);
+
+    // W(w^-2, w^1, w^3) = (w^1, w^3, w^-2)
+    W_x_vals.extend(vec![Omega[d - 2], Omega[1], Omega[3]]);
+    W_y_vals.extend(vec![Omega[1], Omega[3], Omega[d - 2]]);
+
+    // W(w^-1, w^0) = (w^0, w^-1)
+    W_x_vals.extend(vec![Omega[d - 1], Omega[0]]);
+    W_y_vals.extend(vec![Omega[0], Omega[d - 1]]);
+
+    // W(w^2, w^6) = (w^6, w^2)
+    W_x_vals.extend(vec![Omega[2], Omega[6]]);
+    W_y_vals.extend(vec![Omega[6], Omega[2]]);
+
+    // W(w^-3, w^4) = (w^4, w^-3)
+    W_x_vals.extend(vec![Omega[d - 3], Omega[4]]);
+    W_y_vals.extend(vec![Omega[4], Omega[d - 3]]);
+
+    // W(w^5, w^7) = (w^7, w^5)
+    W_x_vals.extend(vec![Omega[5], Omega[7]]);
+    W_y_vals.extend(vec![Omega[7], Omega[5]]);
+
+    // W(w^8) = w^8
+    W_x_vals.push(Omega[8]);
+    W_y_vals.push(Omega[8]);
+
+    // Interpolate the polynomial W
+    let W = interpolate_polynomial(&W_x_vals, &W_y_vals);
+    assert_eq!(W.degree(), d - 1, "W must be of degree d-1");
+
     println!("✅ Generating proving key took: {:?}", start.elapsed());
 
-    SetupProvingKeyOutput { S }
+    SetupProvingKeyOutput { S, W }
 }

@@ -1,5 +1,9 @@
 use crate::{
-    common::{proof::Proof, protocols::verify_T_S_zero_test, utils::{construct_Omega, derive_challenge_from_commitments}},
+    common::{
+        proof::Proof,
+        protocols::verify_T_S_zero_test,
+        utils::{construct_Omega, derive_challenge_from_commitments},
+    },
     setup_global_params::SetupGlobalParamsOutput,
     setup_verification_key::SetupVerificationKeyOutput,
 };
@@ -30,9 +34,17 @@ pub fn run(
     // Derive challenge r from the commitments of T,S
     let r = derive_challenge_from_commitments(&[com_T, com_S]);
 
-    // Verifie T_S zero test
+    // Verify T_S zero test
     assert!(
-        verify_T_S_zero_test(&gp, Omega[1], &Omega_gates, com_T, com_S, r, &proof.proof_T_S_zero),
+        verify_T_S_zero_test(
+            &gp,
+            Omega[1],
+            &Omega_gates,
+            com_T,
+            com_S,
+            r,
+            &proof.proof_T_S_zero
+        ),
         "Verification of T_S Zero Test of T and S must return true"
     );
     println!("✅ Verified T_S Zero Test of T and S on Omega_gates");

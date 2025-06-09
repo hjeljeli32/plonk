@@ -1,4 +1,4 @@
-use crate::common::protocols::{TSZeroTestProof, ZeroTestProof};
+use crate::common::protocols::{PrescribedPermutationCheckProof, TSZeroTestProof, ZeroTestProof};
 use ark_bls12_381::{Fr, G1Projective as G1};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use serde::{Deserialize, Serialize};
@@ -10,6 +10,7 @@ pub struct Proof {
     pub com_T: G1,
     pub proof_T_minus_v_zero: ZeroTestProof,
     pub proof_T_S_zero: TSZeroTestProof,
+    pub proof_T_W_prescribed_permutation: PrescribedPermutationCheckProof,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -18,6 +19,24 @@ pub struct ProofJson {
     pub com_T: String,
     pub proof_T_minus_v_zero: (String, String, String, String, String),
     pub proof_T_S_zero: (
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
+        String,
+    ),
+    pub proof_T_W_prescribed_permutation: (
+        String,
+        String,
+        String,
+        String,
+        String,
         String,
         String,
         String,
@@ -114,6 +133,78 @@ impl From<&Proof> for ProofJson {
         let proof_T_S_zero_proof_q_r = hex::encode(&buf);
         buf.clear();
 
+        proof
+            .proof_T_W_prescribed_permutation
+            .com_q
+            .serialize_compressed(&mut buf)
+            .unwrap();
+        let proof_T_W_prescribed_permutation_com_q = hex::encode(&buf);
+        buf.clear();
+
+        proof
+            .proof_T_W_prescribed_permutation
+            .com_t
+            .serialize_compressed(&mut buf)
+            .unwrap();
+        let proof_T_W_prescribed_permutation_com_t = hex::encode(&buf);
+        buf.clear();
+
+        proof
+            .proof_T_W_prescribed_permutation
+            .proof_t_w_k_minus_1
+            .serialize_compressed(&mut buf)
+            .unwrap();
+        let proof_T_W_prescribed_permutation_proof_t_w_k_minus_1 = hex::encode(&buf);
+        buf.clear();
+
+        proof
+            .proof_T_W_prescribed_permutation
+            .proof_t_rp
+            .serialize_compressed(&mut buf)
+            .unwrap();
+        let proof_T_W_prescribed_permutation_proof_t_rp = hex::encode(&buf);
+        buf.clear();
+
+        proof
+            .proof_T_W_prescribed_permutation
+            .proof_t_w_rp
+            .serialize_compressed(&mut buf)
+            .unwrap();
+        let proof_T_W_prescribed_permutation_proof_t_w_rp = hex::encode(&buf);
+        buf.clear();
+
+        proof
+            .proof_T_W_prescribed_permutation
+            .proof_q_rp
+            .serialize_compressed(&mut buf)
+            .unwrap();
+        let proof_T_W_prescribed_permutation_proof_q_rp = hex::encode(&buf);
+        buf.clear();
+
+        proof
+            .proof_T_W_prescribed_permutation
+            .proof_f_w_rp
+            .serialize_compressed(&mut buf)
+            .unwrap();
+        let proof_T_W_prescribed_permutation_proof_f_w_rp = hex::encode(&buf);
+        buf.clear();
+
+        proof
+            .proof_T_W_prescribed_permutation
+            .proof_g_w_rp
+            .serialize_compressed(&mut buf)
+            .unwrap();
+        let proof_T_W_prescribed_permutation_proof_g_w_rp = hex::encode(&buf);
+        buf.clear();
+
+        proof
+            .proof_T_W_prescribed_permutation
+            .proof_W_w_rp
+            .serialize_compressed(&mut buf)
+            .unwrap();
+        let proof_T_W_prescribed_permutation_proof_W_w_rp = hex::encode(&buf);
+        buf.clear();
+
         ProofJson {
             pub_inputs,
             com_T,
@@ -136,6 +227,27 @@ impl From<&Proof> for ProofJson {
                 proof_T_S_zero_proof_S_r,
                 proof.proof_T_S_zero.q_r.to_string(),
                 proof_T_S_zero_proof_q_r,
+            ),
+            proof_T_W_prescribed_permutation: (
+                proof_T_W_prescribed_permutation_com_t,
+                proof_T_W_prescribed_permutation_com_q,
+                proof
+                    .proof_T_W_prescribed_permutation
+                    .t_w_k_minus_1
+                    .to_string(),
+                proof_T_W_prescribed_permutation_proof_t_w_k_minus_1,
+                proof.proof_T_W_prescribed_permutation.t_rp.to_string(),
+                proof_T_W_prescribed_permutation_proof_t_rp,
+                proof.proof_T_W_prescribed_permutation.t_w_rp.to_string(),
+                proof_T_W_prescribed_permutation_proof_t_w_rp,
+                proof.proof_T_W_prescribed_permutation.q_rp.to_string(),
+                proof_T_W_prescribed_permutation_proof_q_rp,
+                proof.proof_T_W_prescribed_permutation.f_w_rp.to_string(),
+                proof_T_W_prescribed_permutation_proof_f_w_rp,
+                proof.proof_T_W_prescribed_permutation.g_w_rp.to_string(),
+                proof_T_W_prescribed_permutation_proof_g_w_rp,
+                proof.proof_T_W_prescribed_permutation.W_w_rp.to_string(),
+                proof_T_W_prescribed_permutation_proof_W_w_rp,
             ),
         }
     }
@@ -173,6 +285,39 @@ impl From<&ProofJson> for Proof {
         let proof_T_S_zero_proof_q_r_bytes =
             hex::decode(&json.proof_T_S_zero.10).expect("Invalid hex");
 
+        let proof_T_W_prescribed_permutation_com_t_bytes =
+            hex::decode(&json.proof_T_W_prescribed_permutation.0).expect("Invalid hex");
+        let proof_T_W_prescribed_permutation_com_q_bytes =
+            hex::decode(&json.proof_T_W_prescribed_permutation.1).expect("Invalid hex");
+        let proof_T_W_prescribed_permutation_t_w_k_minus_1 =
+            Fr::from_str(&json.proof_T_W_prescribed_permutation.2).expect("Invalid Fr");
+        let proof_T_W_prescribed_permutation_proof_t_w_k_minus_1_bytes =
+            hex::decode(&json.proof_T_W_prescribed_permutation.3).expect("Invalid hex");
+        let proof_T_W_prescribed_permutation_t_rp =
+            Fr::from_str(&json.proof_T_W_prescribed_permutation.4).expect("Invalid Fr");
+        let proof_T_W_prescribed_permutation_proof_t_rp_bytes =
+            hex::decode(&json.proof_T_W_prescribed_permutation.5).expect("Invalid hex");
+        let proof_T_W_prescribed_permutation_t_w_rp =
+            Fr::from_str(&json.proof_T_W_prescribed_permutation.6).expect("Invalid Fr");
+        let proof_T_W_prescribed_permutation_proof_t_w_rp_bytes =
+            hex::decode(&json.proof_T_W_prescribed_permutation.7).expect("Invalid hex");
+        let proof_T_W_prescribed_permutation_q_rp =
+            Fr::from_str(&json.proof_T_W_prescribed_permutation.8).expect("Invalid Fr");
+        let proof_T_W_prescribed_permutation_proof_q_rp_bytes =
+            hex::decode(&json.proof_T_W_prescribed_permutation.9).expect("Invalid hex");
+        let proof_T_W_prescribed_permutation_f_w_rp =
+            Fr::from_str(&json.proof_T_W_prescribed_permutation.10).expect("Invalid Fr");
+        let proof_T_W_prescribed_permutation_proof_f_w_rp_bytes =
+            hex::decode(&json.proof_T_W_prescribed_permutation.11).expect("Invalid hex");
+        let proof_T_W_prescribed_permutation_g_w_rp =
+            Fr::from_str(&json.proof_T_W_prescribed_permutation.12).expect("Invalid Fr");
+        let proof_T_W_prescribed_permutation_proof_g_w_rp_bytes =
+            hex::decode(&json.proof_T_W_prescribed_permutation.13).expect("Invalid hex");
+        let proof_T_W_prescribed_permutation_W_w_rp =
+            Fr::from_str(&json.proof_T_W_prescribed_permutation.14).expect("Invalid Fr");
+        let proof_T_W_prescribed_permutation_proof_W_w_rp_bytes =
+            hex::decode(&json.proof_T_W_prescribed_permutation.15).expect("Invalid hex");
+
         let com_T = G1::deserialize_compressed(&*com_T_bytes).expect("Failed to deserialize com_T");
         let proof_T_minus_v_zero_com_q =
             G1::deserialize_compressed(&*proof_T_minus_v_zero_com_q_bytes)
@@ -198,6 +343,48 @@ impl From<&ProofJson> for Proof {
             proof_q_r: G1::deserialize_compressed(&*proof_T_S_zero_proof_q_r_bytes).unwrap(),
         };
 
+        let proof_T_W_prescribed_permutation = PrescribedPermutationCheckProof {
+            com_t: G1::deserialize_compressed(&*proof_T_W_prescribed_permutation_com_t_bytes)
+                .unwrap(),
+            com_q: G1::deserialize_compressed(&*proof_T_W_prescribed_permutation_com_q_bytes)
+                .unwrap(),
+            t_w_k_minus_1: proof_T_W_prescribed_permutation_t_w_k_minus_1,
+            proof_t_w_k_minus_1: G1::deserialize_compressed(
+                &*proof_T_W_prescribed_permutation_proof_t_w_k_minus_1_bytes,
+            )
+            .unwrap(),
+            t_rp: proof_T_W_prescribed_permutation_t_rp,
+            proof_t_rp: G1::deserialize_compressed(
+                &*proof_T_W_prescribed_permutation_proof_t_rp_bytes,
+            )
+            .unwrap(),
+            t_w_rp: proof_T_W_prescribed_permutation_t_w_rp,
+            proof_t_w_rp: G1::deserialize_compressed(
+                &*proof_T_W_prescribed_permutation_proof_t_w_rp_bytes,
+            )
+            .unwrap(),
+            q_rp: proof_T_W_prescribed_permutation_q_rp,
+            proof_q_rp: G1::deserialize_compressed(
+                &*proof_T_W_prescribed_permutation_proof_q_rp_bytes,
+            )
+            .unwrap(),
+            f_w_rp: proof_T_W_prescribed_permutation_f_w_rp,
+            proof_f_w_rp: G1::deserialize_compressed(
+                &*proof_T_W_prescribed_permutation_proof_f_w_rp_bytes,
+            )
+            .unwrap(),
+            g_w_rp: proof_T_W_prescribed_permutation_g_w_rp,
+            proof_g_w_rp: G1::deserialize_compressed(
+                &*proof_T_W_prescribed_permutation_proof_g_w_rp_bytes,
+            )
+            .unwrap(),
+            W_w_rp: proof_T_W_prescribed_permutation_W_w_rp,
+            proof_W_w_rp: G1::deserialize_compressed(
+                &*proof_T_W_prescribed_permutation_proof_W_w_rp_bytes,
+            )
+            .unwrap(),
+        };
+
         let pub_inputs = json
             .pub_inputs
             .iter()
@@ -215,6 +402,7 @@ impl From<&ProofJson> for Proof {
                 proof_q_r: proof_T_minus_v_zero_proof_q,
             },
             proof_T_S_zero,
+            proof_T_W_prescribed_permutation,
         }
     }
 }

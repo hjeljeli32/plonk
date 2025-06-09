@@ -5,10 +5,7 @@ use ark_poly::{univariate::DensePolynomial, Polynomial};
 use crate::{
     common::{
         polynomials::compose_polynomials,
-        protocols::{
-            compute_q_zero_test_from_roots, prove_T_S_zero_test,
-            TSZeroTestProof,
-        },
+        protocols::{compute_q_zero_test_from_roots, prove_T_S_zero_test, TSZeroTestProof},
         utils::derive_challenge_from_commitments,
     },
     setup_global_params::SetupGlobalParamsOutput,
@@ -28,12 +25,14 @@ pub fn run(
 
     let number_gates = setup.number_gates;
 
+    // Extract global parameters
     let gp = &setup.gp;
 
     // Define Omega_gates
     let mut Omega_gates = vec![];
     (0..number_gates).for_each(|l| Omega_gates.push(Omega[3 * l]));
 
+    // Extract polynomial S and its commitment
     let S = &proving_key.S;
     let com_S = verification_key.com_S;
 

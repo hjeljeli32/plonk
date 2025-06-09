@@ -6,7 +6,7 @@ use ark_serialize::CanonicalSerialize;
 use digest::Digest;
 use plonk::common::utils::{
     construct_Omega, construct_vanishing_polynomial, construct_vanishing_polynomial_from_roots,
-    derive_challenge_from_commitments,
+    derive_challenge_from_commitments, derive_multiple_challenges_from_commitments,
 };
 
 #[test]
@@ -95,5 +95,40 @@ fn test_derive_challenge_from_two_commitments() {
     assert_eq!(
         challenge, expected,
         "Derived challenge from two commitments doesn't match expected value"
+    );
+}
+
+#[test]
+fn test_derive_three_challenges_from_two_commitments() {
+    use plonk::common::utils::derive_multiple_challenges_from_commitments;
+
+    let commitment1 = G1::generator();
+    let commitment2 = G1::generator().double(); // A distinct second commitment
+
+    let challenges = derive_multiple_challenges_from_commitments(&[commitment1, commitment2], 3);
+
+    // Manually re-derive the expected challenges
+    let mut bytes = Vec::new();
+    commitment1.serialize_compressed(&mut bytes).unwrap();
+    commitment2.serialize_compressed(&mut bytes).unwrap();
+    let hash = blake2::Blake2s256::digest(&bytes);
+
+    // Derive 3 field elements using successive chunks from the hash output
+    let mut expected_challenges = Vec::new();
+    let mut hasher_input = hash.to_vec();
+    for i in 0..3 {
+        let mut hasher = blake2::Blake2s256::new();
+        hasher.update(&hasher_input);
+        hasher.update([i as u8]);
+        let hash_i = hasher.finalize();
+        let mut hash_bytes = [0u8; 32];
+        hash_bytes.copy_from_slice(&hash_i[..32]);
+        let challenge_i = Fr::from_le_bytes_mod_order(&hash_bytes);
+        expected_challenges.push(challenge_i);
+    }
+
+    assert_eq!(
+        challenges, expected_challenges,
+        "Derived challenges do not match expected values"
     );
 }

@@ -1,6 +1,7 @@
 pub mod part1;
 pub mod part2;
 pub mod part3;
+pub mod part4;
 
 use std::time::Instant;
 
@@ -35,11 +36,18 @@ pub fn run(
     let proof_T_S_zero = part3::run(&setup, &proving_key, &verification_key, &Omega, &T, com_T);
     println!("✅ Part3 took: {:?}", start.elapsed());
 
+    let start = Instant::now();
+
+    let proof_T_W_prescribed_permutation =
+        part4::run(&setup, &proving_key, &verification_key, &Omega, &T, com_T);
+    println!("✅ Part4 took: {:?}", start.elapsed());
+
     let proof = Proof {
         pub_inputs,
         com_T,
         proof_T_minus_v_zero,
         proof_T_S_zero,
+        proof_T_W_prescribed_permutation,
     };
 
     // Write Proof to a file

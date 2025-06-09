@@ -81,6 +81,41 @@ pub fn derive_challenge_from_commitments(commitments: &[G1]) -> Fr {
     Fr::from_le_bytes_mod_order(&hash_bytes)
 }
 
+/// Derive multiple field elements from a vector of commitments using Blake2s256
+pub fn derive_multiple_challenges_from_commitments(
+    commitments: &[G1],
+    num_challenges: usize,
+) -> Vec<Fr> {
+    let mut hasher = Blake2s256::new();
+
+    // Hash all commitments
+    for commitment in commitments {
+        let mut bytes = Vec::new();
+        commitment
+            .serialize_compressed(&mut bytes)
+            .expect("serialization should not fail");
+        hasher.update(&bytes);
+    }
+
+    let base_hash = hasher.finalize();
+
+    // Use domain separation to derive multiple challenges
+    let mut challenges = Vec::with_capacity(num_challenges);
+    for i in 0..num_challenges {
+        let mut sub_hasher = Blake2s256::new();
+        sub_hasher.update(&base_hash);
+        sub_hasher.update(&[i as u8]); // domain separation
+        let derived_hash = sub_hasher.finalize();
+
+        let mut bytes = [0u8; 32];
+        bytes.copy_from_slice(&derived_hash[..32]);
+        let challenge = Fr::from_le_bytes_mod_order(&bytes);
+        challenges.push(challenge);
+    }
+
+    challenges
+}
+
 /// Extract the inner field element from a pairing output.
 pub fn pairing_value<P: Pairing>(output: &PairingOutput<P>) -> &P::TargetField {
     &output.0
