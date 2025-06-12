@@ -7,15 +7,18 @@ use std::str::FromStr;
 #[derive(Clone, CanonicalSerialize, CanonicalDeserialize)]
 pub struct Proof {
     pub pub_inputs: Vec<Fr>,
+    pub output: Fr,
     pub com_T: G1,
     pub proof_T_minus_v_zero: ZeroTestProof,
     pub proof_T_S_zero: TSZeroTestProof,
     pub proof_T_W_prescribed_permutation: PrescribedPermutationCheckProof,
+    pub proof_last_gate_KZG: G1,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ProofJson {
     pub pub_inputs: Vec<String>,
+    pub output: String,
     pub com_T: String,
     pub proof_T_minus_v_zero: (String, String, String, String, String),
     pub proof_T_S_zero: (
@@ -49,6 +52,7 @@ pub struct ProofJson {
         String,
         String,
     ),
+    pub proof_last_gate_KZG: String,
 }
 
 impl From<&Proof> for ProofJson {
@@ -56,6 +60,7 @@ impl From<&Proof> for ProofJson {
         let mut buf = Vec::new();
 
         let pub_inputs = proof.pub_inputs.iter().map(|fr| fr.to_string()).collect();
+        let output = proof.output.to_string();
 
         proof.com_T.serialize_compressed(&mut buf).unwrap();
         let com_T = hex::encode(&buf);
@@ -205,8 +210,16 @@ impl From<&Proof> for ProofJson {
         let proof_T_W_prescribed_permutation_proof_W_w_rp = hex::encode(&buf);
         buf.clear();
 
+        proof
+            .proof_last_gate_KZG
+            .serialize_compressed(&mut buf)
+            .unwrap();
+        let proof_last_gate_KZG = hex::encode(&buf);
+        buf.clear();
+
         ProofJson {
             pub_inputs,
+            output,
             com_T,
             proof_T_minus_v_zero: (
                 proof_T_minus_v_zero_com_q,
@@ -249,6 +262,7 @@ impl From<&Proof> for ProofJson {
                 proof.proof_T_W_prescribed_permutation.W_w_rp.to_string(),
                 proof_T_W_prescribed_permutation_proof_W_w_rp,
             ),
+            proof_last_gate_KZG,
         }
     }
 }
@@ -317,6 +331,10 @@ impl From<&ProofJson> for Proof {
             Fr::from_str(&json.proof_T_W_prescribed_permutation.14).expect("Invalid Fr");
         let proof_T_W_prescribed_permutation_proof_W_w_rp_bytes =
             hex::decode(&json.proof_T_W_prescribed_permutation.15).expect("Invalid hex");
+
+        let proof_last_gate_KZG_bytes =
+            hex::decode(&json.proof_last_gate_KZG).expect("Invalid hex");
+        let proof_last_gate_KZG = G1::deserialize_compressed(&*proof_last_gate_KZG_bytes).unwrap();
 
         let com_T = G1::deserialize_compressed(&*com_T_bytes).expect("Failed to deserialize com_T");
         let proof_T_minus_v_zero_com_q =
@@ -390,9 +408,11 @@ impl From<&ProofJson> for Proof {
             .iter()
             .map(|s| Fr::from_str(s).expect("Invalid Fr in pub_inputs"))
             .collect();
+        let output = Fr::from_str(&json.output).expect("Invalid Fr in output");
 
         Proof {
             pub_inputs,
+            output,
             com_T,
             proof_T_minus_v_zero: ZeroTestProof {
                 com_q: proof_T_minus_v_zero_com_q,
@@ -403,6 +423,7 @@ impl From<&ProofJson> for Proof {
             },
             proof_T_S_zero,
             proof_T_W_prescribed_permutation,
+            proof_last_gate_KZG,
         }
     }
 }

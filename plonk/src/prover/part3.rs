@@ -21,7 +21,7 @@ pub fn run(
     T: &DensePolynomial<Fr>,
     com_T: G1,
 ) -> TSZeroTestProof {
-    println!("Executing part 3...");
+    println!("Executing part 3: proving that every gate is evaluated correctly");
 
     let number_gates = setup.number_gates;
 

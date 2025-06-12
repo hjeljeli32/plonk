@@ -22,7 +22,7 @@ pub fn run(
     T: &DensePolynomial<Fr>,
     com_T: G1,
 ) -> PrescribedPermutationCheckProof {
-    println!("Executing part 4...");
+    println!("Executing part 4: proving that the wiring is implemented correctly");
 
     let d = setup.d;
 

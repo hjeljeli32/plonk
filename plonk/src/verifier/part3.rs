@@ -13,10 +13,11 @@ pub fn run(
     verification_key: &SetupVerificationKeyOutput,
     proof: &Proof,
 ) -> () {
-    println!("Executing part 3...");
+    println!("Executing part 3: verifying that the wiring is implemented correctly");
 
     let d = setup.d;
 
+    // Extract global parameters
     let gp = &setup.gp;
 
     // Define Omega as subgroup of size d
@@ -25,9 +26,6 @@ pub fn run(
 
     let com_T = proof.com_T;
     let com_W = verification_key.com_W;
-
-    // // Derive challenge r from the commitments of T,S
-    // let r = derive_challenge_from_commitments(&[com_T, com_S]);
 
     // Derive challenges (r, s, rp) from the commitments of T,W
     let challenges = derive_multiple_challenges_from_commitments(&[com_T, com_W], 3);

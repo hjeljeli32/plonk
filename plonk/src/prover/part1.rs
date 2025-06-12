@@ -7,7 +7,7 @@ use crate::{
 };
 
 pub fn run(setup: &SetupGlobalParamsOutput) -> (Vec<Fr>, DensePolynomial<Fr>, G1) {
-    println!("Executing part 1...");
+    println!("Executing part 1: interpolating the computation trace T");
 
     let d = setup.d;
 

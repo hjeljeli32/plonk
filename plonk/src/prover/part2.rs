@@ -18,7 +18,7 @@ pub fn run(
     T: &DensePolynomial<Fr>,
     com_T: G1,
 ) -> ZeroTestProof {
-    println!("Executing part 2...");
+    println!("Executing part 2: proving that T encodes the correct inputs");
 
     let number_public_inputs = setup.number_public_inputs;
     let d = setup.d;

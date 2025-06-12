@@ -1,6 +1,7 @@
 pub mod part1;
 pub mod part2;
 pub mod part3;
+pub mod part4;
 
 use std::time::Instant;
 
@@ -16,16 +17,21 @@ pub fn run(
 ) -> () {
     let start = Instant::now();
 
-    let _ = part1::run(setup, proof);
+    part1::run(setup, proof);
     println!("✅ Part1 took: {:?}", start.elapsed());
 
     let start = Instant::now();
 
-    let _ = part2::run(setup, verification_key, proof);
+    part2::run(setup, verification_key, proof);
     println!("✅ Part2 took: {:?}", start.elapsed());
 
     let start = Instant::now();
 
-    let _ = part3::run(setup, verification_key, proof);
+    part3::run(setup, verification_key, proof);
     println!("✅ Part3 took: {:?}", start.elapsed());
+
+    let start = Instant::now();
+
+    part4::run(setup, proof);
+    println!("✅ Part4 took: {:?}", start.elapsed());
 }

@@ -10,9 +10,14 @@ use crate::common::{
 };
 
 pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
-    println!("Executing part 1...");
+    println!("Executing part 1: verifying that T encodes the correct inputs");
 
+    // Extract number of public inputs
     let number_public_inputs = setup.number_public_inputs;
+
+    // Extract global parameters
+    let gp = &setup.gp;
+
     let d = setup.d;
 
     // Define Omega as subgroup of size d
@@ -41,7 +46,7 @@ pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
     );
 
     // Compute commitment of v and derive commitment of T-v
-    let com_v = kzg_commit(&setup.gp, &v).unwrap();
+    let com_v = kzg_commit(gp, &v).unwrap();
     let com_T_minus_v = proof.com_T - com_v;
 
     // Derive challenge r from the commitment of T-v

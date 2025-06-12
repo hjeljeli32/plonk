@@ -2,6 +2,7 @@ pub mod part1;
 pub mod part2;
 pub mod part3;
 pub mod part4;
+pub mod part5;
 
 use std::time::Instant;
 
@@ -22,6 +23,7 @@ pub fn run(
     let start = Instant::now();
 
     let pub_inputs = vec![Fr::from(5), Fr::from(6)];
+    let output = Fr::from(77);
 
     let (Omega, T, com_T) = part1::run(&setup);
     println!("✅ Part1 took: {:?}", start.elapsed());
@@ -42,12 +44,19 @@ pub fn run(
         part4::run(&setup, &proving_key, &verification_key, &Omega, &T, com_T);
     println!("✅ Part4 took: {:?}", start.elapsed());
 
+    let start = Instant::now();
+
+    let proof_last_gate_KZG = part5::run(&setup, &Omega, &T, output);
+    println!("✅ Part5 took: {:?}", start.elapsed());
+
     let proof = Proof {
         pub_inputs,
+        output,
         com_T,
         proof_T_minus_v_zero,
         proof_T_S_zero,
         proof_T_W_prescribed_permutation,
+        proof_last_gate_KZG,
     };
 
     // Write Proof to a file

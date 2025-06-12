@@ -13,11 +13,14 @@ pub fn run(
     verification_key: &SetupVerificationKeyOutput,
     proof: &Proof,
 ) -> () {
-    println!("Executing part 2...");
+    println!("Executing part 2: verifying that every gate is evaluated correctly");
 
     let d = setup.d;
 
+    // Extract number of gates
     let number_gates = setup.number_gates;
+
+    // Extract global parameters
     let gp = &setup.gp;
 
     // Define Omega as subgroup of size d
