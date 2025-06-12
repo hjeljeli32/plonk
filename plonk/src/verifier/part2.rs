@@ -1,8 +1,10 @@
+use ark_bls12_381::Fr;
+
 use crate::{
     common::{
         proof::Proof,
         protocols::verify_T_S_zero_test,
-        utils::{construct_Omega, derive_challenge_from_commitments},
+        utils::derive_challenge_from_commitments,
     },
     setup_global_params::SetupGlobalParamsOutput,
     setup_verification_key::SetupVerificationKeyOutput,
@@ -12,20 +14,15 @@ pub fn run(
     setup: &SetupGlobalParamsOutput,
     verification_key: &SetupVerificationKeyOutput,
     proof: &Proof,
+    Omega: &Vec<Fr>
 ) -> () {
     println!("Executing part 2: verifying that every gate is evaluated correctly");
-
-    let d = setup.d;
 
     // Extract number of gates
     let number_gates = setup.number_gates;
 
     // Extract global parameters
     let gp = &setup.gp;
-
-    // Define Omega as subgroup of size d
-    let Omega = construct_Omega(d);
-    assert_eq!(Omega.len(), d, "Omega must be of length d");
 
     // Define Omega_gates
     let mut Omega_gates = vec![];

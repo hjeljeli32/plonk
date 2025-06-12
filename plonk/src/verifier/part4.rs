@@ -1,12 +1,12 @@
+use ark_bls12_381::Fr;
+
 use crate::{
-    common::{kzg::kzg_verify, proof::Proof, utils::construct_Omega},
+    common::{kzg::kzg_verify, proof::Proof},
     setup_global_params::SetupGlobalParamsOutput,
 };
 
-pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
+pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof, Omega: &Vec<Fr>) -> () {
     println!("Executing part 4: verifying the output of the last gate");
-
-    let d = setup.d;
 
     // Extract global parameters
     let gp = &setup.gp;
@@ -15,10 +15,6 @@ pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
     let number_gates = setup.number_gates;
 
     let com_T = proof.com_T;
-
-    // Define Omega as subgroup of size d
-    let Omega = construct_Omega(d);
-    assert_eq!(Omega.len(), d, "Omega must be of length d");
 
     // Verify Prescribed Permutation Check
     assert!(

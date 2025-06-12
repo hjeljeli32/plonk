@@ -9,7 +9,7 @@ use std::time::Instant;
 use ark_bls12_381::Fr;
 
 use crate::{
-    common::proof::{Proof, ProofJson},
+    common::{proof::{Proof, ProofJson}, utils::construct_Omega},
     setup_global_params::SetupGlobalParamsOutput,
     setup_proving_key::SetupProvingKeyOutput,
     setup_verification_key::SetupVerificationKeyOutput,
@@ -25,7 +25,12 @@ pub fn run(
     let pub_inputs = vec![Fr::from(5), Fr::from(6)];
     let output = Fr::from(77);
 
-    let (Omega, T, com_T) = part1::run(&setup);
+    // Define Omega as subgroup of size d
+    let d = setup.d;
+    let Omega = construct_Omega(d);
+    assert_eq!(Omega.len(), d, "Omega must be of length d");
+
+    let (T, com_T) = part1::run(&setup, &Omega);
     println!("✅ Part1 took: {:?}", start.elapsed());
 
     let start = Instant::now();

@@ -1,8 +1,10 @@
+use ark_bls12_381::Fr;
+
 use crate::{
     common::{
         proof::Proof,
         protocols::verify_prescribed_permutation_check,
-        utils::{construct_Omega, derive_multiple_challenges_from_commitments},
+        utils::derive_multiple_challenges_from_commitments,
     },
     setup_global_params::SetupGlobalParamsOutput,
     setup_verification_key::SetupVerificationKeyOutput,
@@ -12,6 +14,7 @@ pub fn run(
     setup: &SetupGlobalParamsOutput,
     verification_key: &SetupVerificationKeyOutput,
     proof: &Proof,
+    Omega: &Vec<Fr>
 ) -> () {
     println!("Executing part 3: verifying that the wiring is implemented correctly");
 
@@ -19,10 +22,6 @@ pub fn run(
 
     // Extract global parameters
     let gp = &setup.gp;
-
-    // Define Omega as subgroup of size d
-    let Omega = construct_Omega(d);
-    assert_eq!(Omega.len(), d, "Omega must be of length d");
 
     let com_T = proof.com_T;
     let com_W = verification_key.com_W;

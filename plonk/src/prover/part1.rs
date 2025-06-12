@@ -2,18 +2,14 @@ use ark_bls12_381::{Fr, G1Projective as G1};
 use ark_poly::{univariate::DensePolynomial, Polynomial};
 
 use crate::{
-    common::{kzg::kzg_commit, polynomials::interpolate_polynomial, utils::construct_Omega},
+    common::{kzg::kzg_commit, polynomials::interpolate_polynomial},
     setup_global_params::SetupGlobalParamsOutput,
 };
 
-pub fn run(setup: &SetupGlobalParamsOutput) -> (Vec<Fr>, DensePolynomial<Fr>, G1) {
+pub fn run(setup: &SetupGlobalParamsOutput, Omega: &Vec<Fr>) -> (DensePolynomial<Fr>, G1) {
     println!("Executing part 1: interpolating the computation trace T");
 
     let d = setup.d;
-
-    // Define Omega as subgroup of size d
-    let Omega = construct_Omega(d);
-    assert_eq!(Omega.len(), d, "Omega must be of length d");
 
     let (mut x_vals, mut y_vals) = (vec![], vec![]);
 
@@ -69,5 +65,5 @@ pub fn run(setup: &SetupGlobalParamsOutput) -> (Vec<Fr>, DensePolynomial<Fr>, G1
     // Compute commitment of t
     let com_T = kzg_commit(&setup.gp, &T).unwrap();
 
-    (Omega, T, com_T)
+    (T, com_T)
 }

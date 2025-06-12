@@ -1,15 +1,16 @@
 use crate::{common::proof::Proof, setup_global_params::SetupGlobalParamsOutput};
 
+use ark_bls12_381::Fr;
 use ark_poly::Polynomial;
 
 use crate::common::{
     kzg::kzg_commit,
     polynomials::interpolate_polynomial,
     protocols::verify_zero_on_roots_test,
-    utils::{construct_Omega, derive_challenge_from_commitments},
+    utils::derive_challenge_from_commitments,
 };
 
-pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
+pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof, Omega: &Vec<Fr>) -> () {
     println!("Executing part 1: verifying that T encodes the correct inputs");
 
     // Extract number of public inputs
@@ -19,10 +20,6 @@ pub fn run(setup: &SetupGlobalParamsOutput, proof: &Proof) -> () {
     let gp = &setup.gp;
 
     let d = setup.d;
-
-    // Define Omega as subgroup of size d
-    let Omega = construct_Omega(d);
-    assert_eq!(Omega.len(), d, "Omega must be of length d");
 
     // Define Omega_inputs
     let mut Omega_inputs = vec![];
