@@ -12,7 +12,7 @@ This project was developed to:
 
 * **Understand Plonk deeply** by re-implementing each layer from scratch,
 * **Demystify the stack** involved in a Plonk proof system — from field arithmetic to polynomial IOPs,
-* **Experiment with optimizations** such as parallelism in FFTs and batched commitments.
+* **Experiment with optimizations** such as batched commitments.
 
 It serves as both a **learning tool** and a **prototype** for efficient ZK proof systems in Rust.
 
