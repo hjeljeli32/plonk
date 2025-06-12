@@ -2,7 +2,7 @@
 
 ## 🚀 What is this?
 
-This project is a **Rust implementation of the Plonk IOP** protocol, including both the **setup**, **prover** and **verifier** for a given arithmetic circuit. The implementation is designed from the ground up with a clear educational focus, while laying the groundwork for future performance optimizations.
+This project is a **Rust implementation of the Plonk IOP** protocol, including both the **setup**, **prover** and **verifier** for a given arithmetic circuit. This implementation is designed as a self-contained educational project, created to deeply understand the inner workings of Plonk and demonstrate full-stack ZK proof engineering in Rust—from arithmetic circuits to IOP and polynomial commitments.
 
 ---
 
@@ -13,6 +13,7 @@ This project was developed to:
 * **Understand Plonk deeply** by re-implementing each layer from scratch,
 * **Demystify the stack** involved in a Plonk proof system — from field arithmetic to polynomial IOPs,
 * **Experiment with optimizations** such as batched commitments.
+* **Explore end-to-end implementation** of a non-trivial cryptographic protocol stack, with relevance to engineering and research roles in ZK systems.
 
 It serves as both a **learning tool** and a **prototype** for efficient ZK proof systems in Rust.
 
@@ -68,6 +69,8 @@ Steps:
    * Wiring between gates is respected.
    * Output matches expected result.
 
+This reflects a focus on writing clean, testable code with clear interfaces across cryptographic layers.
+
 ---
 
 ## ✅ Features Implemented
@@ -77,7 +80,7 @@ Steps:
 * ✅ KZG polynomial commitment scheme
 * ✅ Poly-IOP gadgets
 * ✅ Full Plonk IOP pipeline implemented and tested on a hard-coded example circuit
-* All core components of the Plonk IOP have been completed and tested against a hard-coded example circuit.
+* All foundational layers of the Plonk IOP have been implemented and validated through end-to-end proof generation and verification over a working example circuit.
 
 ---
 
@@ -153,6 +156,8 @@ tests/
 └── utils_tests.rs           # Tests for helpers functions
 ```
 
+This structure was chosen to reflect clarity and modularity, making it easier for reviewers to navigate through prover, verifier, and shared logic.
+
 ---
 
 ## 🧪 Testing Strategy
@@ -177,6 +182,8 @@ To run a specific test file:
 ```bash
 cargo test --test kzg_tests
 ```
+
+This reflects an engineering mindset focused on reliability and clear interfaces across cryptographic layers.
 
 ---
 
