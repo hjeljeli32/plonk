@@ -69,7 +69,7 @@ Steps:
    * Wiring between gates is respected.
    * Output matches expected result.
 
-This reflects a focus on writing clean, testable code with clear interfaces across cryptographic layers.
+This is written with an emphasis on modular, testable code and clear separation between cryptographic components.
 
 ---
 
@@ -183,8 +183,7 @@ To run a specific test file:
 cargo test --test kzg_tests
 ```
 
-This reflects an engineering mindset focused on reliability and clear interfaces across cryptographic layers.
-
+This aims to follow engineering principles of modularity and clarity across cryptographic layers.
 ---
 
 ## 🤝 Contributing
