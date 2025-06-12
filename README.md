@@ -2,7 +2,7 @@
 
 ## 🚀 What is this?
 
-This project is a **Rust implementation of the Plonk IOP** protocol, including both the **prover** and **verifier** for a given arithmetic circuit. The implementation is designed from the ground up with a clear educational focus, while laying the groundwork for future performance optimizations.
+This project is a **Rust implementation of the Plonk IOP** protocol, including both the **setup**, **prover** and **verifier** for a given arithmetic circuit. The implementation is designed from the ground up with a clear educational focus, while laying the groundwork for future performance optimizations.
 
 ---
 
@@ -55,7 +55,7 @@ Protocols for proving properties of committed polynomials:
 * **Permutation Check:** Prove f(Ω) is a permutation of g(Ω).
 * **Prescribed Permutation Check:** Prove f(Ω) = g(W(Ω)) for known permutation W.
 
-### 🔧 Plonk IOP Protocol (WIP)
+### 🔧 Plonk IOP Protocol
 
 An IOP-based implementation of the Plonk protocol for a **simple arithmetic circuit**.
 Steps:
@@ -76,14 +76,47 @@ Steps:
 * ✅ Elliptic curve and pairing arithmetic using `ark-ec`
 * ✅ KZG polynomial commitment scheme
 * ✅ Poly-IOP gadgets
+* ✅ Full Plonk IOP pipeline implemented and tested on a hard-coded example circuit
+* All core components of the Plonk IOP have been completed and tested against a hard-coded example circuit.
 
 ---
 
 ## 🛠️ In Progress
 
-* 🔧 Full Plonk IOP integration with a concrete example circuit
-* 🔧 Selector polynomials & constraint systems
-* 🔧 Parallelized FFTs and multiexponentiation
+The next step is to generalize the implementation to support arbitrary circuits, specified externally (e.g., via a JSON file). This will allow the system to generate and verify Plonk proofs for any user-defined circuit rather than relying on a hard-coded example.
+
+---
+
+## 🏃 Running the Full Plonk IOP Pipeline
+
+The project includes five executables, each corresponding to a step in the Plonk proving and verification workflow:
+
+1. **Global Setup:** Generates universal parameters (SRS) for the system.
+   ```bash
+   cargo run --bin setup_global_params
+   ```
+
+2. **Proving Key Setup:** Generates the proving key specific to the target circuit, it will be used by the prover.
+   ```bash
+   cargo run --bin setup_proving_key
+   ```
+
+3. **Verification Key Setup:** Generates the verification key specific to the target circuit, it will be used by the verifier.
+   ```bash
+   cargo run --bin setup_verification_key
+   ```
+
+4. **Proof Generation (Prover):** Executes the Plonk IOP prover algorithm.
+   ```bash
+   cargo run --bin prover
+   ```
+
+5. **Proof Verification (Verifier):** Runs the verifier to check the correctness of the proof.
+   ```bash
+   cargo run --bin verifier
+   ```
+
+Each binary performs one step of the end-to-end protocol and may read/write intermediate files such as proving/verification keys and the generated proof.
 
 ---
 
@@ -91,18 +124,25 @@ Steps:
 
 ```
 src/
-├── common/
-    ├── kzg.rs               # KZG commitment logic
-    ├── mod.rs
-    ├── polynomials.rs       # Polynomial operations
-    ├── protocols            # Poly-IOP gadgets (e.g., equality, sum-check)
-    └── utils.rs             # Shared helpers (e.g. pairing accessors)
-├── prover/                  # Executable for the prover (WIP)
-    ├── mod.rs
-    └── part1.rs 
-├── verifier/                # Executable for the verifier (WIP)
-    └── mod.rs           
-└── lib.rs
+├── bin/                             # Entrypoint binaries for setup, proving, and verification
+│   ├── prover.rs                    # Loads inputs and runs the proving logic
+│   ├── verifier.rs                  # Loads inputs and runs the verifying logic
+│   ├── setup_global_params/         # Global parameter setup (SRS)
+│   ├── setup_proving_key/           # Proving key generation
+│   └── setup_verification_key/      # Verification key generation
+├── common/                          # Core shared modules for Plonk IOP
+│   ├── kzg.rs                       # KZG commitment logic
+│   ├── mod.rs
+│   ├── polynomials.rs               # Polynomial data structures and operations
+│   ├── proof.rs                     # Proof data structures
+│   ├── protocols.rs                 # Poly-IOP gadgets and Plonk IOP logic
+│   └── utils.rs                     # Common utilities (e.g. pairing helpers)
+├── prover/                          # Prover-side Plonk IOP implementation
+│   ├── mod.rs
+│   └── part*.rs                     # Modularized prover steps
+├── verifier/                        # Verifier-side Plonk IOP implementation
+│   ├── mod.rs
+│   └── part*.rs                     # Modularized verifier steps
 
 tests/
 ├── ec_tests.rs              # Tests for elliptic curve group and pairing ops
@@ -110,7 +150,7 @@ tests/
 ├── kzg_tests.rs             # Tests for commitment, opening, and verification
 ├── protocols_tests.rs       # Tests for poly-IOP gadgets like permutation checks
 ├── polynomials_tests.rs     # Tests for univariate polynomial evaluation and logic
-└── utils_tests.rs           # Tests for helpers functions 
+└── utils_tests.rs           # Tests for helpers functions
 ```
 
 ---
@@ -137,36 +177,6 @@ To run a specific test file:
 ```bash
 cargo test --test kzg_tests
 ```
-
----
-
-## 🏃 Running the Prover and Verifier
-
-This project includes two binaries located in `src/bin/`:
-
-* `prover.rs` — runs the prover protocol
-* `verifier.rs` — runs the verifier protocol
-
-To run them:
-
-```bash
-cargo run --bin prover
-cargo run --bin verifier
-```
-
-You can also list all available binaries with:
-
-```bash
-cargo run --bin
-```
-
----
-
-## 📚 Learnings & Insights
-
-* Evaluation at random verifier-chosen points is sufficient for prescribed permutation checks.
-* Evaluation-based polynomial equality is a clean and modular method for enforcing constraints.
-* Composing IOP layers around commitments enables flexible circuit representations.
 
 ---
 
